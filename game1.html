@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mini Space Shooter (Space Impact-inspired)</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: #070b14;
+      color: #e9eefc;
+      display: grid;
+      place-items: start center;
+      padding: 16px;
+      gap: 10px;
+    }
+    .wrap { width: min(980px, 100%); display: grid; gap: 10px; }
+    .hud {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid #1a2a55;
+      background: linear-gradient(180deg, #0b1226, #070b14);
+      border-radius: 10px;
+    }
+    .hudLeft { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+    .pill {
+      padding: 6px 10px;
+      border: 1px solid #1a2a55;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.03);
+      font-variant-numeric: tabular-nums;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    .card {
+      border: 1px solid #1a2a55;
+      border-radius: 10px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    input[type="range"] { width: 100%; }
+    canvas {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: radial-gradient(1200px 600px at 40% 40%, rgba(70,120,255,0.12), transparent 60%),
+                  linear-gradient(180deg, #070b14, #04060d);
+      border: 1px solid #1a2a55;
+      border-radius: 12px;
+      display: block;
+    }
+    .help {
+      opacity: .85;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .btn {
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid #1a2a55;
+      background: rgba(255,255,255,0.04);
+      color: #e9eefc;
+    }
+    .btn:active { transform: translateY(1px); }
+    .barOuter {
+      width: 240px;
+      height: 14px;
+      border-radius: 999px;
+      border: 1px solid #1a2a55;
+      overflow: hidden;
+      background: rgba(255,255,255,0.03);
+    }
+    .barInner {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #2ae67d, #f1d14d 55%, #ff4d4d);
+      transform-origin: left center;
+      transform: scaleX(1);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hud">
+      <div class="hudLeft">
+        <div class="pill">Score: <span id="score">0</span></div>
+        <div class="pill" style="display:flex;align-items:center;gap:10px;">
+          Health
+          <div class="barOuter" title="Player health">
+            <div class="barInner" id="healthBar"></div>
+          </div>
+          <span id="healthText" style="min-width:64px;text-align:right;">100/100</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn" id="resetBtn">Reset</button>
+        <div class="pill">State: <span id="state">Playing</span></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="card">
+        <div class="row">
+          <div><strong>Enemy spawn rate</strong></div>
+          <div class="pill"><span id="spawnLbl">1.5</span>/s</div>
+        </div>
+        <input id="spawnRate" type="range" min="0.2" max="6" step="0.1" value="1.5" />
+        <div class="help">Higher = more enemies per second.</div>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <div><strong>Projectile speed</strong></div>
+          <div class="pill"><span id="projLbl">560</span> px/s</div>
+        </div>
+        <input id="projSpeed" type="range" min="200" max="1200" step="10" value="560" />
+        <div class="help">Affects new shots (existing shots keep their current speed).</div>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <div><strong>Player max health</strong></div>
+          <div class="pill"><span id="hpLbl">100</span></div>
+        </div>
+        <input id="maxHP" type="range" min="30" max="200" step="5" value="100" />
+        <div class="help">Adjusts maximum health (current health scales proportionally).</div>
+      </div>
+    </div>
+
+    <canvas id="game" width="960" height="540"></canvas>
+
+    <div class="help">
+      Controls: <strong>W/S</strong> or <strong>↑/↓</strong> to move • <strong>Space</strong> to shoot • Click canvas to focus •
+      When health reaches 0, press <strong>Reset</strong>.
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    // UI
+    const scoreEl = document.getElementById("score");
+    const stateEl = document.getElementById("state");
+    const healthBarEl = document.getElementById("healthBar");
+    const healthTextEl = document.getElementById("healthText");
+
+    const spawnRateEl = document.getElementById("spawnRate");
+    const projSpeedEl = document.getElementById("projSpeed");
+    const maxHPEl = document.getElementById("maxHP");
+    const spawnLbl = document.getElementById("spawnLbl");
+    const projLbl = document.getElementById("projLbl");
+    const hpLbl = document.getElementById("hpLbl");
+
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    function aabb(a, b) {
+      return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+
+    // Game state
+    const keys = new Set();
+    let score = 0;
+    let running = true;
+
+    const player = {
+      x: 44, y: canvas.height * 0.5,
+      w: 46, h: 28,
+      speed: 320, // px/s
+      maxHP: Number(maxHPEl.value),
+      hp: Number(maxHPEl.value),
+      fireCooldown: 0,
+      fireRate: 9, // shots/s
+      invuln: 0
+    };
+
+    const projectiles = [];
+    const enemies = [];
+    const particles = []; // tiny explosion puffs
+
+    let spawnAccumulator = 0;
+
+    // Sliders
+    function syncLabels() {
+      spawnLbl.textContent = Number(spawnRateEl.value).toFixed(1);
+      projLbl.textContent = String(Number(projSpeedEl.value));
+      hpLbl.textContent = String(Number(maxHPEl.value));
+    }
+    syncLabels();
+
+    spawnRateEl.addEventListener("input", syncLabels);
+    projSpeedEl.addEventListener("input", syncLabels);
+
+    maxHPEl.addEventListener("input", () => {
+      const oldMax = player.maxHP;
+      const newMax = Number(maxHPEl.value);
+      const ratio = oldMax > 0 ? player.hp / oldMax : 1;
+      player.maxHP = newMax;
+      player.hp = clamp(Math.round(ratio * newMax), 0, newMax);
+      syncLabels();
+      updateHUD();
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", resetGame);
+
+    function resetGame() {
+      score = 0;
+      running = true;
+      stateEl.textContent = "Playing";
+      projectiles.length = 0;
+      enemies.length = 0;
+      particles.length = 0;
+      spawnAccumulator = 0;
+
+      player.x = 44;
+      player.y = canvas.height * 0.5;
+      player.maxHP = Number(maxHPEl.value);
+      player.hp = player.maxHP;
+      player.fireCooldown = 0;
+      player.invuln = 0;
+
+      updateHUD();
+      canvas.focus?.();
+    }
+
+    // Input
+    window.addEventListener("keydown", (e) => {
+      if (["ArrowUp","ArrowDown"," ","w","s","W","S"].includes(e.key)) e.preventDefault();
+      keys.add(e.key);
+    }, { passive: false });
+
+    window.addEventListener("keyup", (e) => keys.delete(e.key));
+
+    canvas.tabIndex = 0;
+    canvas.addEventListener("pointerdown", () => canvas.focus());
+
+    function shoot() {
+      const speed = Number(projSpeedEl.value);
+      projectiles.push({
+        x: player.x + player.w,
+        y: player.y + player.h * 0.5 - 2,
+        w: 14, h: 4,
+        vx: speed,
+        damage: 1
+      });
+    }
+
+    function spawnEnemy() {
+      const h = 26 + Math.random() * 26;
+      const w = 34 + Math.random() * 22;
+      const y = Math.random() * (canvas.height - h - 20) + 10;
+      const baseSpeed = 120 + Math.random() * 160; // px/s
+      enemies.push({
+        x: canvas.width + w + 8,
+        y,
+        w, h,
+        vx: -baseSpeed,
+        hp: 1,
+        touchDamage: 14
+      });
+    }
+
+    function boom(x, y, n = 10) {
+      for (let i = 0; i < n; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const sp = 40 + Math.random() * 140;
+        particles.push({
+          x, y,
+          vx: Math.cos(a) * sp,
+          vy: Math.sin(a) * sp,
+          life: 0.35 + Math.random() * 0.25
+        });
+      }
+    }
+
+    function updateHUD() {
+      scoreEl.textContent = String(score);
+      healthTextEl.textContent = `${player.hp}/${player.maxHP}`;
+      const t = player.maxHP ? (player.hp / player.maxHP) : 0;
+      healthBarEl.style.transform = `scaleX(${clamp(t, 0, 1)})`;
+    }
+
+    // Stars
+    const stars = Array.from({ length: 120 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.7 + 0.3,
+      s: Math.random() * 55 + 20
+    }));
+
+    // Main loop
+    let last = performance.now();
+    updateHUD();
+    requestAnimationFrame(loop);
+
+    function loop(now) {
+      const dt = Math.min(0.033, (now - last) / 1000);
+      last = now;
+
+      update(dt);
+      draw();
+
+      requestAnimationFrame(loop);
+    }
+
+    function update(dt) {
+      // background stars drift
+      for (const st of stars) {
+        st.x -= st.s * dt;
+        if (st.x < -2) { st.x = canvas.width + 2; st.y = Math.random() * canvas.height; }
+      }
+
+      if (!running) return;
+
+      // player movement
+      const up = keys.has("ArrowUp") || keys.has("w") || keys.has("W");
+      const dn = keys.has("ArrowDown") || keys.has("s") || keys.has("S");
+      if (up) player.y -= player.speed * dt;
+      if (dn) player.y += player.speed * dt;
+      player.y = clamp(player.y, 8, canvas.height - player.h - 8);
+
+      // shooting
+      player.fireCooldown = Math.max(0, player.fireCooldown - dt);
+      const fire = keys.has(" ") || keys.has("Spacebar");
+      if (fire && player.fireCooldown <= 0) {
+        shoot();
+        player.fireCooldown = 1 / player.fireRate;
+      }
+
+      // spawn enemies based on slider (enemies per second)
+      const rate = Number(spawnRateEl.value);
+      spawnAccumulator += rate * dt;
+      while (spawnAccumulator >= 1) {
+        spawnEnemy();
+        spawnAccumulator -= 1;
+      }
+
+      // update projectiles
+      for (let i = projectiles.length - 1; i >= 0; i--) {
+        const p = projectiles[i];
+        p.x += p.vx * dt;
+        if (p.x > canvas.width + 40) projectiles.splice(i, 1);
+      }
+
+      // update enemies
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        e.x += e.vx * dt;
+        if (e.x < -80) enemies.splice(i, 1);
+      }
+
+      // invulnerability timer (after hit)
+      player.invuln = Math.max(0, player.invuln - dt);
+
+      // projectile-enemy collisions
+      for (let ei = enemies.length - 1; ei >= 0; ei--) {
+        const e = enemies[ei];
+        let destroyed = false;
+
+        for (let pi = projectiles.length - 1; pi >= 0; pi--) {
+          const p = projectiles[pi];
+          if (aabb(e, p)) {
+            projectiles.splice(pi, 1);
+            e.hp -= p.damage;
+            boom(p.x, p.y, 6);
+            if (e.hp <= 0) {
+              enemies.splice(ei, 1);
+              score += 1;
+              boom(e.x + e.w * 0.5, e.y + e.h * 0.5, 14);
+              destroyed = true;
+            }
+            break;
+          }
+        }
+        if (destroyed) continue;
+      }
+
+      // enemy-player collisions (damage)
+      for (let ei = enemies.length - 1; ei >= 0; ei--) {
+        const e = enemies[ei];
+        if (aabb(e, player)) {
+          enemies.splice(ei, 1);
+          boom(e.x + e.w * 0.5, e.y + e.h * 0.5, 18);
+
+          if (player.invuln <= 0) {
+            player.hp = clamp(player.hp - e.touchDamage, 0, player.maxHP);
+            player.invuln = 0.35;
+            if (player.hp <= 0) {
+              running = false;
+              stateEl.textContent = "Game Over";
+            }
+          }
+        }
+      }
+
+      // particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const pt = particles[i];
+        pt.life -= dt;
+        pt.x += pt.vx * dt;
+        pt.y += pt.vy * dt;
+        pt.vx *= (1 - 3.5 * dt);
+        pt.vy *= (1 - 3.5 * dt);
+        if (pt.life <= 0) particles.splice(i, 1);
+      }
+
+      updateHUD();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // stars
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      for (const st of stars) {
+        ctx.globalAlpha = 0.25 + (st.r / 2.2) * 0.6;
+        ctx.beginPath();
+        ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // subtle left lane glow
+      const grd = ctx.createLinearGradient(0, 0, 180, 0);
+      grd.addColorStop(0, "rgba(80,140,255,0.18)");
+      grd.addColorStop(1, "rgba(80,140,255,0)");
+      ctx.fillStyle = grd;
+      ctx.fillRect(0, 0, 220, canvas.height);
+
+      // player ship
+      const blink = player.invuln > 0 && Math.floor(player.invuln * 24) % 2 === 0;
+      if (!blink) {
+        ctx.save();
+        ctx.translate(player.x, player.y);
+
+        // body
+        ctx.fillStyle = "#b9d2ff";
+        ctx.strokeStyle = "#2c57ff";
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        ctx.moveTo(0, player.h * 0.5);
+        ctx.lineTo(18, 2);
+        ctx.lineTo(player.w, player.h * 0.5);
+        ctx.lineTo(18, player.h - 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // cockpit
+        ctx.fillStyle = "rgba(0,0,0,0.35)";
+        ctx.beginPath();
+        ctx.ellipse(20, player.h * 0.5, 7, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // engine glow
+        ctx.fillStyle = "rgba(90,200,255,0.7)";
+        ctx.fillRect(-8, player.h * 0.5 - 4, 8, 8);
+        ctx.restore();
+      }
+
+      // projectiles
+      ctx.fillStyle = "#7ef0ff";
+      for (const p of projectiles) {
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.globalAlpha = 0.25;
+        ctx.fillRect(p.x - 12, p.y, 12, p.h);
+        ctx.globalAlpha = 1;
+      }
+
+      // enemies
+      for (const e of enemies) {
+        ctx.save();
+        ctx.translate(e.x, e.y);
+
+        ctx.fillStyle = "#ff8a8a";
+        ctx.strokeStyle = "#ff3d3d";
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        ctx.moveTo(e.w, e.h * 0.5);
+        ctx.lineTo(e.w - 14, 2);
+        ctx.lineTo(0, e.h * 0.5);
+        ctx.lineTo(e.w - 14, e.h - 2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      // particles
+      for (const pt of particles) {
+        const a = clamp(pt.life / 0.6, 0, 1);
+        ctx.globalAlpha = a * 0.9;
+        ctx.fillStyle = "rgba(255,220,160,1)";
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // overlay when game over
+      if (!running) {
+        ctx.fillStyle = "rgba(0,0,0,0.45)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#e9eefc";
+        ctx.font = "700 42px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 10);
+        ctx.font = "500 16px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+        ctx.fillText("Press Reset to play again", canvas.width / 2, canvas.height / 2 + 24);
+      }
+    }
+  </script>
+</body>
+</html>
