@@ -13,7 +13,7 @@
     background: #1a1c23;
     color: #e6edf3;
     font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    overscroll-behavior: none; /* Prevent pull-to-refresh */
+    overscroll-behavior: none;
     touch-action: manipulation;
   }
   body {
@@ -54,9 +54,10 @@
     width: 100%;
     max-width: 400px;
     aspect-ratio: 1 / 1;
-    touch-action: none; /* Prevent scrolling on canvas */
+    touch-action: none;
   }
 
+  /* --- Panel & Collapsible Settings --- */
   .panel {
     background: #232733;
     border: 1px solid #2a3a5c;
@@ -65,7 +66,60 @@
     min-width: 220px;
     flex-shrink: 0;
   }
-  .row { margin: 8px 0; }
+  
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  
+  .panel-header .score {
+    font-size: 18px;
+    margin: 0;
+    color: #7ee787;
+    font-weight: bold;
+  }
+  
+  .toggle-btn {
+    background: #3a3f4b;
+    color: #e6edf3;
+    border: 1px solid #4a5060;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .toggle-btn:hover { background: #4a5060; }
+  .toggle-btn:active { transform: scale(0.95); }
+
+  .status {
+    margin: 4px 0 8px;
+    font-size: 13px;
+    color: #f87171;
+    min-height: 18px;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  .panel-body {
+    max-height: 500px;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.4s ease;
+    opacity: 1;
+  }
+  
+  .panel-body.hidden {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+  }
+
+  .row { margin: 10px 0; }
   label {
     display: flex;
     justify-content: space-between;
@@ -74,26 +128,15 @@
     color: #9fb3d1;
   }
   input[type=range] { width: 100%; accent-color: #7ee787; }
-  .score {
-    font-size: 18px;
-    margin: 0 0 10px;
-    color: #7ee787;
-    font-weight: bold;
-    text-align: center;
-  }
-  .status {
-    margin-top: 8px;
-    font-size: 13px;
-    color: #f87171;
-    min-height: 18px;
-    text-align: center;
-  }
+  
   .hint {
     font-size: 11px;
     color: #6b7a96;
-    margin-top: 8px;
+    margin-top: 12px;
     line-height: 1.4;
     text-align: center;
+    border-top: 1px solid #2a3a5c;
+    padding-top: 10px;
   }
 
   /* --- Retro Game Boy Controls --- */
@@ -218,25 +261,36 @@
   <div class="game-area">
     <div class="top-section">
       <canvas id="game" width="500" height="500"></canvas>
+      
       <div class="panel">
-        <div class="score">Score: <span id="score">0</span></div>
-        <div class="row">
-          <label>Speed <span id="speedVal">150ms</span></label>
-          <input id="speed" type="range" min="50" max="300" step="10" value="150">
+        <!-- Always visible header with Score and Toggle -->
+        <div class="panel-header">
+          <div class="score">Score: <span id="score">0</span></div>
+          <button id="toggleSettings" class="toggle-btn">⚙️ Show</button>
         </div>
-        <div class="row">
-          <label>Initial Length <span id="lenVal">5</span></label>
-          <input id="len" type="range" min="3" max="15" step="1" value="5">
-        </div>
-        <div class="row">
-          <label>Food Spawn <span id="foodVal">2000ms</span></label>
-          <input id="food" type="range" min="500" max="5000" step="100" value="2000">
-        </div>
+        
+        <!-- Always visible status -->
         <div class="status" id="status"></div>
-        <div class="hint">
-          Keyboard: Arrows / WASD<br>
-          Mobile: D-Pad below<br>
-          B = Pause | A = Restart
+
+        <!-- Collapsible sliders and hints -->
+        <div class="panel-body hidden" id="settingsBody">
+          <div class="row">
+            <label>Speed <span id="speedVal">150ms</span></label>
+            <input id="speed" type="range" min="50" max="300" step="10" value="150">
+          </div>
+          <div class="row">
+            <label>Initial Length <span id="lenVal">5</span></label>
+            <input id="len" type="range" min="3" max="15" step="1" value="5">
+          </div>
+          <div class="row">
+            <label>Food Spawn <span id="foodVal">2000ms</span></label>
+            <input id="food" type="range" min="500" max="5000" step="100" value="2000">
+          </div>
+          <div class="hint">
+            Keyboard: Arrows / WASD | P = Pause<br>
+            Mobile: D-Pad below<br>
+            B = Pause | A = Restart
+          </div>
         </div>
       </div>
     </div>
@@ -282,6 +336,9 @@
   
   const btnPause = document.getElementById('btnPause');
   const btnRestart = document.getElementById('btnRestart');
+  
+  const toggleBtn = document.getElementById('toggleSettings');
+  const settingsBody = document.getElementById('settingsBody');
 
   let snake, dir, nextDir, foods, score, gameOver, isPaused;
   let moveTimer = null, foodTimer = null;
@@ -338,12 +395,10 @@
     let nx = head.x + dir.x;
     let ny = head.y + dir.y;
 
-    // Wrap around edges
     nx = (nx + COLS) % COLS;
     ny = (ny + ROWS) % ROWS;
 
     const newHead = { x: nx, y: ny };
-
     const willEat = foods.some(f => f.x === nx && f.y === ny);
     const bodyToCheck = willEat ? snake : snake.slice(0, -1);
     
@@ -411,7 +466,6 @@
       ctx.stroke();
     }
 
-    // Food
     foods.forEach(f => {
       const cx = f.x * CELL + CELL / 2;
       const cy = f.y * CELL + CELL / 2;
@@ -425,7 +479,6 @@
       ctx.fill();
     });
 
-    // Snake
     snake.forEach((s, i) => {
       const isHead = i === 0;
       ctx.fillStyle = isHead ? '#7ee787' : '#4ade80';
@@ -447,16 +500,19 @@
     if (isPaused) drawPauseOverlay();
   }
 
+  // --- Settings Toggle ---
+  toggleBtn.addEventListener('click', () => {
+    const isHidden = settingsBody.classList.toggle('hidden');
+    toggleBtn.innerHTML = isHidden ? '⚙️ Show' : '⚙️ Hide';
+  });
+
   // --- Input Handling ---
-  
   function changeDirection(nd) {
     if (gameOver || isPaused) return;
-    // Prevent 180° reversal
     if (nd.x === -dir.x && nd.y === -dir.y) return;
     nextDir = nd;
   }
 
-  // Keyboard
   document.addEventListener('keydown', e => {
     const k = e.key.toLowerCase();
     let nd = null;
@@ -472,7 +528,6 @@
     }
   });
 
-  // D-Pad Touch/Mouse
   const dpadButtons = document.querySelectorAll('.dpad button');
   dpadButtons.forEach(btn => {
     const handlePress = (e) => {
@@ -495,17 +550,13 @@
       btn.classList.remove('active');
     };
 
-    // Using pointer events for unified mouse/touch handling
     btn.addEventListener('pointerdown', handlePress);
     btn.addEventListener('pointerup', handleRelease);
     btn.addEventListener('pointerleave', handleRelease);
     btn.addEventListener('pointercancel', handleRelease);
-    
-    // Prevent context menu on long press
     btn.addEventListener('contextmenu', e => e.preventDefault());
   });
 
-  // A/B Buttons
   btnRestart.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     init();
@@ -516,12 +567,10 @@
     togglePause();
   });
 
-  // Prevent context menu on A/B buttons
   [btnRestart, btnPause].forEach(btn => {
     btn.addEventListener('contextmenu', e => e.preventDefault());
   });
 
-  // Slider live updates
   speedEl.addEventListener('input', () => {
     speedVal.textContent = speedEl.value + 'ms';
     if (!gameOver && !isPaused) {
@@ -536,7 +585,6 @@
     foodTimer = setInterval(spawnFood, parseInt(foodEl.value, 10));
   });
 
-  // Prevent pull-to-refresh and bouncing on iOS when interacting with the game area
   document.body.addEventListener('touchmove', (e) => {
     if (e.target.closest('.gameboy-controls') || e.target.closest('canvas')) {
       e.preventDefault();
