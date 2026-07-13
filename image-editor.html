@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Simple Image Editor</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+  h1 { margin-bottom: 20px; color: #38bdf8; }
+
+  .container {
+    width: 100%;
+    max-width: 900px;
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+
+  #drop-zone {
+    border: 3px dashed #475569;
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 20px;
+  }
+  #drop-zone.hover { border-color: #38bdf8; background: rgba(56,189,248,0.08); }
+  #drop-zone p { color: #94a3b8; }
+
+  #preview-wrapper {
+    display: none;
+    text-align: center;
+    background: #0f172a;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 20px;
+    overflow: auto;
+    max-height: 500px;
+  }
+  #preview {
+    max-width: 100%;
+    max-height: 480px;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 15px;
+  }
+  button {
+    background: #334155;
+    color: #e2e8f0;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  button:hover { background: #475569; transform: translateY(-1px); }
+  button.primary { background: #0ea5e9; }
+  button.primary:hover { background: #0284c7; }
+  button.danger { background: #dc2626; }
+  button.danger:hover { background: #b91c1c; }
+
+  .info {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+  <h1>🎨 Simple Image Editor</h1>
+
+  <div class="container">
+    <div id="drop-zone">
+      <p><strong>Drag & drop</strong> an image here, or click to select</p>
+      <p style="font-size:12px; margin-top:8px;">Supports PNG, JPG, WEBP</p>
+      <input type="file" id="file-input" accept="image/*" style="display:none" />
+    </div>
+
+    <div id="preview-wrapper">
+      <img id="preview" alt="Preview" />
+    </div>
+
+    <div class="toolbar">
+      <button id="btn-grayscale">Grayscale</button>
+      <button id="btn-invert">Invert Colors</button>
+      <button id="btn-sepia">Sepia</button>
+      <button id="btn-blur">Blur</button>
+      <button id="btn-bright">Brighten</button>
+      <button id="btn-reset" class="danger">Reset</button>
+    </div>
+
+    <div class="toolbar">
+      <button id="btn-export-png" class="primary">Export as PNG</button>
+      <button id="btn-export-jpg" class="primary">Export as JPG</button>
+    </div>
+
+    <div class="info" id="info">No image loaded.</div>
+  </div>
+
+<script>
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const preview = document.getElementById('preview');
+  const previewWrapper = document.getElementById('preview-wrapper');
+  const info = document.getElementById('info');
+
+  let originalImage = null;   // HTMLImageElement at original resolution
+  let currentFilter = 'none'; // CSS filter string for preview
+
+  // ---------- File loading ----------
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => {
+    if (e.target.files[0]) loadFile(e.target.files[0]);
+  });
+
+  ['dragenter','dragover'].forEach(ev =>
+    dropZone.addEventListener(ev, e => {
+      e.preventDefault(); dropZone.classList.add('hover');
+    })
+  );
+  ['dragleave','drop'].forEach(ev =>
+    dropZone.addEventListener(ev, e => {
+      e.preventDefault(); dropZone.classList.remove('hover');
+    })
+  );
+  dropZone.addEventListener('drop', e => {
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) loadFile(file);
+  });
+
+  function loadFile(file) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        originalImage = img;
+        preview.src = img.src;
+        previewWrapper.style.display = 'block';
+        currentFilter = 'none';
+        applyPreviewFilter();
+        info.textContent = `Loaded: ${file.name} — ${img.naturalWidth}×${img.naturalHeight}px`;
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ---------- Filters (preview via CSS) ----------
+  function applyPreviewFilter() {
+    preview.style.filter = currentFilter === 'none' ? '' : currentFilter;
+  }
+
+  document.getElementById('btn-grayscale').onclick = () => {
+    currentFilter = 'grayscale(100%)'; applyPreviewFilter();
+  };
+  document.getElementById('btn-invert').onclick = () => {
+    currentFilter = 'invert(100%)'; applyPreviewFilter();
+  };
+  document.getElementById('btn-sepia').onclick = () => {
+    currentFilter = 'sepia(100%)'; applyPreviewFilter();
+  };
+  document.getElementById('btn-blur').onclick = () => {
+    currentFilter = 'blur(3px)'; applyPreviewFilter();
+  };
+  document.getElementById('btn-bright').onclick = () => {
+    currentFilter = 'brightness(1.4) contrast(1.1)'; applyPreviewFilter();
+  };
+  document.getElementById('btn-reset').onclick = () => {
+    currentFilter = 'none'; applyPreviewFilter();
+  };
+
+  // ---------- Export at original resolution ----------
+  function exportImage(format) {
+    if (!originalImage) { alert('Please load an image first.'); return; }
+
+    // Create a canvas at the image's ORIGINAL size
+    const canvas = document.createElement('canvas');
+    canvas.width  = originalImage.naturalWidth;
+    canvas.height = originalImage.naturalHeight;
+
+    const ctx = canvas.getContext('2d');
+    // Apply the same filter used in preview, but at full resolution
+    ctx.filter = (currentFilter === 'none') ? 'none' : currentFilter;
+    ctx.drawImage(originalImage, 0, 0);
+
+    const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
+    const quality = format === 'jpg' ? 0.92 : undefined;
+
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `edited-image.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }, mime, quality);
+  }
+
+  document.getElementById('btn-export-png').onclick = () => exportImage('png');
+  document.getElementById('btn-export-jpg').onclick = () => exportImage('jpg');
+</script>
+</body>
+</html>
