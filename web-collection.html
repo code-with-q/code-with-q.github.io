@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Premium Web Templates Collection — web-templates/</title>
+<meta name="description" content="Five production-ready, single-file web templates: financial trackers, task management, SaaS landing and employee time monitoring.">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --navy:#0F2A43; --ink:#12263A; --body:#42546C; --muted:#7C93AB;
+  --blue:#0B57D0; --blue-d:#0842A6; --cyan:#00A3FF;
+  --blue-l:#E8F1FE; --sky:#BFD7FF; --line:#DCE7F5; --bg:#F6F9FF;
+  --amber:#F5A623; --green:#16A34A;
+  --sh-1:0 1px 2px rgba(10,37,64,.05), 0 6px 18px rgba(10,37,64,.07);
+  --sh-2:0 4px 10px rgba(10,37,64,.08), 0 20px 44px rgba(11,87,208,.16);
+  --ease:cubic-bezier(.22,.9,.3,1);
+  --font-d:'Avenir Next','Segoe UI Variable Display','Helvetica Neue','Segoe UI',system-ui,sans-serif;
+  --font-b:'Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif;
+  --mono:ui-monospace,'SF Mono','Cascadia Code','JetBrains Mono',Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-b); font-size:15.5px; color:var(--body);
+  background:var(--bg); line-height:1.6; overflow-x:hidden;
+}
+::selection{background:var(--sky); color:var(--navy)}
+a{color:inherit}
+button{font:inherit; cursor:pointer; border:none; background:none; color:inherit}
+:focus-visible{outline:3px solid rgba(11,87,208,.4); outline-offset:2px; border-radius:6px}
+.mono{font-family:var(--mono)}
+.wrap{max-width:1180px; margin:0 auto; padding:0 clamp(16px,4vw,28px)}
+
+/* ============ AMBIENT BACKGROUND ============ */
+.bg{position:fixed; inset:0; z-index:-1; pointer-events:none}
+.bg::before{ /* dot grid */
+  content:''; position:absolute; inset:0;
+  background-image:radial-gradient(circle, rgba(11,87,208,.075) 1px, transparent 1.4px);
+  background-size:24px 24px;
+  mask-image:radial-gradient(ellipse 90% 70% at 50% 0%, #000 30%, transparent 100%);
+}
+.bg::after{ /* soft blue glows, slow drift */
+  content:''; position:absolute; inset:-20%;
+  background:
+    radial-gradient(600px 420px at 12% 8%, rgba(11,87,208,.10), transparent 65%),
+    radial-gradient(700px 500px at 88% 22%, rgba(0,163,255,.10), transparent 65%),
+    radial-gradient(560px 400px at 50% 95%, rgba(11,87,208,.06), transparent 65%);
+  animation:drift 22s ease-in-out infinite alternate;
+}
+@keyframes drift{from{transform:translate3d(-1.5%,-1%,0)}to{transform:translate3d(1.5%,2%,0)}}
+
+/* ============ TOP BAR ============ */
+.topbar{
+  position:sticky; top:0; z-index:50; background:#fff;
+  border-bottom:1px solid #E6EEF8; transition:box-shadow .3s;
+}
+.topbar.scrolled{box-shadow:0 4px 18px rgba(10,37,64,.09)}
+.topbar .wrap{display:flex; align-items:center; justify-content:space-between; height:60px}
+.brand{display:flex; align-items:center; gap:10px; text-decoration:none}
+.brand-mark{width:28px; height:28px; border-radius:8px; display:grid; place-items:center;
+  background:linear-gradient(135deg,var(--blue),var(--cyan)); box-shadow:0 4px 10px rgba(11,87,208,.35)}
+.brand-name{font-family:var(--mono); font-weight:700; font-size:14.5px; color:var(--navy)}
+.brand-name .slash{color:var(--blue)}
+.top-right{display:flex; align-items:center; gap:18px}
+.status{display:inline-flex; align-items:center; gap:8px; font-size:12.5px; color:var(--muted);
+  background:#F4F9FF; border:1px solid var(--line); padding:5px 12px; border-radius:999px}
+.pulse{width:8px; height:8px; border-radius:50%; background:var(--green); animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(22,163,74,.45)}55%{box-shadow:0 0 0 7px rgba(22,163,74,0)}}
+.clock{font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; letter-spacing:.5px}
+@media(max-width:700px){.status{display:none}}
+@media(max-width:440px){.clock{display:none}}
+
+/* ============ HERO ============ */
+.hero{display:grid; grid-template-columns:1.05fr .95fr; gap:clamp(28px,4vw,56px);
+  align-items:center; padding:clamp(44px,7vw,84px) 0 clamp(40px,6vw,68px)}
+[data-a]{opacity:0; animation:fadeUp .75s var(--ease) both; animation-delay:var(--d,0s)}
+@keyframes fadeUp{from{opacity:0; transform:translateY(24px)}to{opacity:1; transform:none}}
+
+.eyebrow{display:inline-flex; align-items:center; gap:8px; font-family:var(--mono);
+  font-size:12.5px; font-weight:600; color:var(--blue); background:#fff;
+  border:1px solid #CFE2FF; padding:6px 14px; border-radius:999px; margin-bottom:22px;
+  box-shadow:0 2px 8px rgba(11,87,208,.08)}
+.eyebrow svg{width:13px; height:13px; flex:none}
+h1{font-family:var(--font-d); font-weight:800; color:var(--navy);
+  font-size:clamp(2.45rem,5.3vw,3.85rem); line-height:1.04; letter-spacing:-.022em; margin-bottom:20px}
+h1 .accent{color:var(--blue); position:relative; z-index:1; white-space:nowrap}
+h1 .accent::after{content:''; position:absolute; left:-2%; bottom:.06em; width:104%; height:.28em;
+  background:rgba(0,163,255,.28); z-index:-1; border-radius:3px;
+  transform:scaleX(0); transform-origin:left; animation:swipe .65s var(--ease) .85s forwards}
+@keyframes swipe{to{transform:scaleX(1)}}
+.lede{max-width:52ch; font-size:17px; line-height:1.68; margin-bottom:24px}
+.lede b{color:var(--navy)}
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:34px}
+.chip{display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:12px;
+  font-weight:600; color:var(--body); background:#fff; border:1px solid var(--line);
+  padding:5px 12px; border-radius:999px; transition:.25s var(--ease)}
+.chip i{width:6px; height:6px; border-radius:50%; background:var(--blue)}
+.chip:nth-child(even) i{background:var(--cyan)}
+.chip:hover{border-color:var(--blue); color:var(--blue); transform:translateY(-2px)}
+.stats{display:flex; flex-wrap:wrap; gap:clamp(18px,3vw,38px)}
+.stat b{display:block; font-family:var(--font-d); font-size:27px; font-weight:800;
+  color:var(--blue); letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.stat span{font-size:11.5px; text-transform:uppercase; letter-spacing:1.4px; color:var(--muted); font-weight:600}
+
+/* --- hero stage (floating window stack) --- */
+.hero-stage{position:relative; height:440px}
+.stage-dots{position:absolute; inset:4% 0 0 6%;
+  background-image:radial-gradient(circle,#A9CBF7 1.6px,transparent 1.6px);
+  background-size:19px 19px; opacity:.55;
+  mask-image:radial-gradient(closest-side,#000 40%,transparent 100%)}
+.stack{position:absolute; inset:0; transform:translate(calc(var(--px,0)*12px),calc(var(--py,0)*10px));
+  transition:transform .5s ease-out}
+.mini{position:absolute; background:#fff; border:1px solid var(--line); border-radius:12px;
+  overflow:hidden; box-shadow:0 20px 44px rgba(10,37,64,.16);
+  animation:floaty var(--t,7s) ease-in-out var(--dl,0s) infinite alternate}
+@keyframes floaty{from{transform:translateY(-8px) rotate(var(--rot,0deg))}to{transform:translateY(10px) rotate(var(--rot,0deg))}}
+.mini-chrome{display:flex; align-items:center; gap:8px; padding:7px 10px;
+  background:#F7FAFF; border-bottom:1px solid var(--line)}
+.mini-chrome .dots{display:flex; gap:4px}
+.mini-chrome .dots i{width:6px; height:6px; border-radius:50%; background:#D5E2F2}
+.mini-chrome .dots i:first-child{background:#FF8A80}
+.mini-chrome .dots i:nth-child(2){background:#FFD180}
+.mini-chrome .dots i:last-child{background:#69F0AE}
+.mini-chrome span{font-family:var(--mono); font-size:9px; color:var(--muted);
+  background:#EDF3FC; padding:2px 8px; border-radius:5px}
+.m1{width:236px; left:4%; top:7%; --rot:-7deg; z-index:1}
+.m2{width:212px; right:1%; top:24%; --rot:5deg; z-index:2; --t:8s; --dl:-2.6s}
+.m3{width:206px; left:24%; bottom:1%; --rot:-2deg; z-index:3; --t:7.4s; --dl:-4.2s}
+.m-body{padding:14px}
+.m-bars{display:flex; align-items:flex-end; gap:7px; height:66px}
+.m-bars i{flex:1; border-radius:5px 5px 2px 2px; background:#CFE2FF}
+.m-bars i:nth-child(4){background:linear-gradient(180deg,#2F80ED,var(--blue))}
+.m-check{display:flex; flex-direction:column; gap:9px}
+.m-check div{display:flex; align-items:center; gap:8px}
+.m-check b{width:13px; height:13px; border-radius:4px; border:1.6px solid #B9D2F0; flex:none}
+.m-check .on b{background:var(--blue); border-color:var(--blue); position:relative}
+.m-check .on b::after{content:'✓'; position:absolute; inset:0; color:#fff; font-size:9px;
+  display:grid; place-items:center; font-weight:700}
+.m-check s{height:6px; border-radius:99px; background:#E3EDFA; display:block}
+.m-clock{display:flex; align-items:center; gap:12px}
+.m-clock svg{width:46px; height:46px}
+.m-clock b{font-family:var(--mono); font-size:16px; color:var(--navy)}
+.m-clock small{display:block; font-size:10px; color:var(--muted); font-family:var(--mono)}
+.file-chip{position:absolute; display:inline-flex; align-items:center; gap:7px;
+  font-family:var(--mono); font-size:11.5px; font-weight:600; color:var(--navy);
+  background:#fff; border:1px solid var(--line); padding:6px 13px; border-radius:999px;
+  box-shadow:0 8px 20px rgba(10,37,64,.12); animation:floaty 6.4s ease-in-out var(--dl,0s) infinite alternate}
+.file-chip i{width:7px; height:7px; border-radius:50%; background:var(--cyan)}
+.fc1{top:-2%; right:16%; --dl:-1.2s}
+.fc2{bottom:15%; right:-1%; --dl:-3.4s}
+.fc2 i{background:var(--blue)}
+.orbit-wrap{position:absolute; left:-10px; bottom:-14px; width:116px; height:116px; z-index:4}
+.orbit{width:100%; height:100%; animation:spin 26s linear infinite}
+.orbit text{font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:2.1px; fill:var(--blue)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.orbit-core{position:absolute; inset:0; margin:auto; width:46px; height:46px; border-radius:50%;
+  background:#fff; border:1px solid var(--line); box-shadow:0 8px 20px rgba(11,87,208,.22);
+  display:grid; place-items:center; color:var(--blue); font-weight:800; font-size:18px}
+
+/* ============ GALLERY ============ */
+.gallery{padding:8px 0 clamp(60px,8vw,100px)}
+.gallery-head{display:flex; align-items:flex-end; justify-content:space-between;
+  gap:20px; flex-wrap:wrap; margin-bottom:26px}
+h2{font-family:var(--font-d); font-weight:800; color:var(--navy); font-size:clamp(1.5rem,2.6vw,1.9rem);
+  letter-spacing:-.02em}
+.count{font-size:12.5px; color:var(--blue); font-weight:600; margin-top:4px; display:inline-block}
+.count.pop{animation:popTx .4s var(--ease)}
+@keyframes popTx{0%{transform:scale(.82); opacity:.3}100%{transform:scale(1); opacity:1}}
+.filters{display:flex; flex-wrap:wrap; gap:8px}
+.fbtn{display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:600;
+  color:var(--body); background:#fff; border:1px solid var(--line);
+  padding:7px 15px; border-radius:999px; transition:.25s var(--ease)}
+.fbtn em{font-style:normal; font-family:var(--mono); font-size:10.5px; background:#EDF3FC;
+  color:var(--muted); padding:1px 7px; border-radius:999px; transition:.25s}
+.fbtn:hover{border-color:var(--blue); color:var(--blue); transform:translateY(-2px)}
+.fbtn.active{background:var(--blue); border-color:var(--blue); color:#fff;
+  box-shadow:0 6px 16px rgba(11,87,208,.35)}
+.fbtn.active em{background:rgba(255,255,255,.22); color:#fff}
+
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(292px,1fr)); gap:24px}
+.card{background:#fff; border:1px solid #E3ECF7; border-radius:16px; overflow:hidden;
+  display:flex; flex-direction:column; box-shadow:var(--sh-1); opacity:0;
+  transition:transform .35s var(--ease), box-shadow .35s var(--ease), border-color .35s}
+.card.in{opacity:1; animation:cardIn .65s var(--ease) both; animation-delay:var(--d,0s)}
+.card.settled{animation:none}
+@keyframes cardIn{from{opacity:0; transform:translateY(30px) scale(.97)}to{opacity:1; transform:none}}
+.card:hover{transform:translateY(-7px); box-shadow:var(--sh-2); border-color:#C9DDF8}
+.card.hide{display:none}
+@media(min-width:700px){
+  .card--featured{grid-column:span 2; display:grid; grid-template-columns:1.15fr 1fr}
+  .card--featured .shot{border-bottom:none; border-right:1px solid var(--line)}
+  .card--featured .screen{height:100%; min-height:252px}
+  .card--featured .body{padding:24px 26px}
+}
+
+/* --- card preview ("browser shot") --- */
+.shot{position:relative; background:#fff}
+.ribbon{position:absolute; top:10px; left:10px; z-index:2; font-size:10px; font-weight:700;
+  letter-spacing:1.6px; color:#fff; background:linear-gradient(90deg,var(--blue),var(--cyan));
+  padding:4px 11px; border-radius:999px; box-shadow:0 4px 12px rgba(11,87,208,.4)}
+.chrome{display:flex; align-items:center; gap:10px; padding:9px 12px;
+  background:#F7FAFF; border-bottom:1px solid var(--line)}
+.chrome .dots{display:flex; gap:5px; flex:none}
+.chrome .dots i{width:8px; height:8px; border-radius:50%}
+.chrome .dots i:nth-child(1){background:#FF8A80}
+.chrome .dots i:nth-child(2){background:#FFD180}
+.chrome .dots i:nth-child(3){background:#69F0AE}
+.chrome .url{font-size:10.5px; color:#5B7693; background:#EDF3FC; padding:3px 10px;
+  border-radius:6px; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  transition:.3s}
+.card:hover .chrome .url{color:var(--blue); background:var(--blue-l)}
+.screen{height:196px; padding:14px 16px; display:flex; flex-direction:column; gap:10px;
+  background:linear-gradient(180deg,#FBFDFF,#F2F8FF)}
+
+/* mock: bars (basic finance) */
+.s-head{display:flex; justify-content:space-between; align-items:baseline}
+.s-label{font-size:10px; text-transform:uppercase; letter-spacing:1.4px; color:var(--muted); font-weight:700}
+.s-amount{font-size:17px; font-weight:700; color:var(--navy)}
+.s-chart{display:flex; align-items:flex-end; gap:9px; flex:1;
+  border-bottom:1.5px dashed #C9DCF4; padding-bottom:2px}
+.bar{flex:1; height:var(--h); border-radius:6px 6px 2px 2px; background:#CFE2FF; position:relative;
+  transform:scaleY(.5); transform-origin:bottom;
+  transition:transform .55s var(--ease) calc(var(--i)*55ms)}
+.card:hover .bar{transform:scaleY(1)}
+.bar.hot{background:linear-gradient(180deg,#2F80ED,var(--blue))}
+.bar.hot em{position:absolute; bottom:-17px; left:50%; transform:translateX(-50%);
+  font-style:normal; font-size:8.5px; color:var(--blue); font-weight:700}
+.s-foot{display:flex; justify-content:space-between; font-size:10px; color:var(--muted); padding-top:6px}
+.s-foot b{color:var(--green); font-weight:700}
+.s-foot s{text-decoration:none; color:#D97757; font-weight:700}
+
+/* mock: donut (premium finance) */
+.s-donut-wrap{display:flex; align-items:center; gap:18px; flex:1}
+.donut{width:88px; height:88px; border-radius:50%; position:relative; flex:none}
+.donut::before{content:''; position:absolute; inset:0; border-radius:50%;
+  background:conic-gradient(var(--blue) 0 42%, var(--cyan) 42% 70%, #9CC3FF 70% 88%, #E3F0FF 88% 100%);
+  transition:transform .7s var(--ease)}
+.card:hover .donut::before{transform:rotate(28deg)}
+.donut::after{content:''; position:absolute; inset:15px; border-radius:50%; background:#FBFDFF}
+.donut span{position:absolute; inset:0; z-index:1; display:grid; place-items:center;
+  font-size:14px; font-weight:700; color:var(--navy)}
+.d-side{flex:1; display:flex; flex-direction:column; gap:7px}
+.pill{font-size:10px; font-weight:700; padding:4px 10px; border-radius:999px; width:max-content}
+.pill.up{background:#E7F6EC; color:var(--green)}
+.pill.down{background:#FDEFE9; color:#D97757}
+.spark{width:100%; height:34px; margin-top:2px}
+.spark .base{fill:none; stroke:#D6E6FF; stroke-width:2.4; stroke-linecap:round}
+.spark .live{fill:none; stroke:var(--blue); stroke-width:2.4; stroke-linecap:round;
+  stroke-dasharray:100; stroke-dashoffset:100; transition:stroke-dashoffset 1s var(--ease) .1s}
+.card:hover .spark .live{stroke-dashoffset:0}
+.s-legend{display:flex; gap:14px; font-size:9.5px; color:var(--muted)}
+.s-legend i{width:7px; height:7px; border-radius:2px; display:inline-block;
+  margin-right:4px; vertical-align:0; background:var(--c)}
+
+/* mock: kanban (task manager) */
+.sc-kanban{flex-direction:row; gap:9px}
+.kb-col{flex:1; background:#F2F7FF; border:1px solid #E3EDFA; border-radius:9px; padding:8px 7px;
+  display:flex; flex-direction:column; gap:7px}
+.kb-h{font-size:8px; letter-spacing:1.3px; color:var(--muted); font-weight:700}
+.kb-card{background:#fff; border:1px solid #E3ECF7; border-radius:7px; padding:7px;
+  box-shadow:0 2px 5px rgba(10,37,64,.05); display:flex; flex-direction:column; gap:5px}
+.kb-card .ln{height:5px; border-radius:99px; background:#D9E6F8; display:block}
+.kb-card .row{display:flex; align-items:center; gap:5px}
+.dot{width:7px; height:7px; border-radius:50%; flex:none}
+.d-amber{background:var(--amber)} .d-blue{background:var(--blue)} .d-cyan{background:var(--cyan)}
+.prog{height:5px; background:#DCE9FB; border-radius:99px; overflow:hidden}
+.prog b{display:block; height:100%; width:34%; border-radius:99px;
+  background:linear-gradient(90deg,var(--blue),var(--cyan)); transition:width .65s var(--ease)}
+.card:hover .prog b{width:82%}
+.chk{width:14px; height:14px; border-radius:50%; background:var(--green); color:#fff;
+  font-size:9px; font-weight:700; display:grid; place-items:center; flex:none; font-style:normal;
+  transform:scale(0); transition:transform .4s cubic-bezier(.34,1.9,.64,1) .12s}
+.card:hover .chk{transform:scale(1)}
+
+/* mock: saas landing */
+.sx-nav{display:flex; align-items:center; gap:10px}
+.sx-logo{width:12px; height:12px; border-radius:4px; background:linear-gradient(135deg,var(--blue),var(--cyan))}
+.sx-links{display:flex; gap:6px; flex:1}
+.sx-links b{width:16px; height:4px; border-radius:99px; background:#D9E6F8}
+.sx-cta{font-size:8.5px; font-weight:700; color:var(--blue); border:1.4px solid var(--blue);
+  padding:3px 9px; border-radius:999px}
+.sx-hero{display:flex; flex-direction:column; gap:7px; padding:10px 0 4px}
+.sx-h1{height:11px; width:82%; border-radius:4px; background:var(--navy)}
+.sx-h1.short{width:52%; background:var(--blue)}
+.sx-sub{height:5px; width:68%; border-radius:99px; background:#D9E6F8}
+.sx-btn{height:20px; width:76px; border-radius:999px; background:var(--blue); margin-top:5px;
+  box-shadow:0 4px 10px rgba(11,87,208,.35)}
+.card:hover .sx-btn{animation:ring 1.3s ease-out infinite}
+@keyframes ring{0%{box-shadow:0 4px 10px rgba(11,87,208,.35),0 0 0 0 rgba(11,87,208,.35)}
+  100%{box-shadow:0 4px 10px rgba(11,87,208,.35),0 0 0 12px rgba(11,87,208,0)}}
+.sx-price{display:flex; gap:8px; flex:1; align-items:stretch}
+.tier{flex:1; background:#fff; border:1px solid #E3ECF7; border-radius:8px; position:relative;
+  transition:.35s var(--ease);
+  background-image:linear-gradient(#D9E6F8,#D9E6F8),linear-gradient(#EAF2FC,#EAF2FC),linear-gradient(#EAF2FC,#EAF2FC);
+  background-size:60% 6px,80% 4px,70% 4px; background-position:12px 14px,12px 28px,12px 38px;
+  background-repeat:no-repeat}
+.tier.hot{border-color:var(--blue); box-shadow:0 8px 18px rgba(11,87,208,.18)}
+.card:hover .tier.hot{transform:translateY(-5px)}
+.tier.hot em{position:absolute; top:-7px; left:50%; transform:translateX(-50%);
+  font-style:normal; font-size:7px; font-weight:700; letter-spacing:1px; color:#fff;
+  background:var(--blue); padding:2px 7px; border-radius:999px}
+
+/* mock: timetrack */
+.tt-grid{display:flex; gap:16px; flex:1; align-items:center}
+.tt-rows{flex:1; display:flex; flex-direction:column; gap:11px}
+.tt-row{display:flex; align-items:center; gap:9px}
+.ava{width:22px; height:22px; border-radius:50%; flex:none; display:grid; place-items:center;
+  color:#fff; font-size:8px; font-weight:700; font-style:normal; background:var(--c)}
+.tt-main{flex:1; min-width:0}
+.tt-main .ln{height:5px; width:64px; max-width:70%; border-radius:99px; background:#D9E6F8;
+  display:block; margin-bottom:5px}
+.tbar{height:6px; background:#E3EDFA; border-radius:99px; overflow:hidden}
+.tbar b{display:block; height:100%; width:var(--w); border-radius:99px; background:var(--c);
+  transition:width .55s var(--ease)}
+.card:hover .tbar b{width:calc(var(--w) + 7%)}
+.hrs{font-size:10px; color:var(--muted); font-weight:600; display:flex; align-items:center; gap:5px}
+.ot{font-style:normal; font-size:7.5px; font-weight:700; color:#B45309; background:#FFF4DE;
+  padding:1px 5px; border-radius:4px}
+.tt-clock{display:flex; flex-direction:column; align-items:center; gap:8px; flex:none}
+.tt-svg{width:66px; height:66px}
+.hand{transform-box:view-box; transform-origin:50% 50%}
+.mn{animation:tick 9s linear infinite}
+.hr{animation:tick 70s linear infinite}
+.card:hover .mn{animation-duration:2.2s}
+.card:hover .hr{animation-duration:14s}
+@keyframes tick{to{transform:rotate(360deg)}}
+.tt-status{font-size:9.5px; color:var(--muted); display:flex; align-items:center; gap:5px}
+.g-dot{width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite}
+
+/* --- card body --- */
+.body{padding:18px 20px 20px; display:flex; flex-direction:column; flex:1}
+.tags{display:flex; gap:7px; align-items:center; margin-bottom:10px}
+.cat{font-family:var(--mono); font-size:10px; font-weight:700; text-transform:uppercase;
+  letter-spacing:1.3px; color:var(--blue); background:var(--blue-l); padding:3px 9px; border-radius:6px}
+.badge{font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+  padding:3px 9px; border-radius:6px}
+.b-premium{background:var(--blue); color:#fff}
+.b-basic{background:#fff; border:1px solid var(--sky); color:var(--blue)}
+.b-sample{background:#E0F5FF; color:#0086C7}
+.b-staff{background:#FFF4DE; color:#B45309}
+.body h3{font-family:var(--font-d); font-size:19.5px; font-weight:800; color:var(--navy);
+  letter-spacing:-.01em; margin-bottom:7px}
+.body p{font-size:13.8px; line-height:1.62; flex:1}
+.meta{display:flex; align-items:center; gap:8px; margin-top:16px}
+.meta code{font-family:var(--mono); font-size:11.5px; color:#5B7693; background:#F2F7FF;
+  border:1px solid #E3ECF7; padding:5px 9px; border-radius:7px; flex:1;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.icon-btn{width:31px; height:31px; flex:none; border-radius:8px; border:1px solid var(--line);
+  background:#fff; color:#5B7693; display:grid; place-items:center;
+  transition:.25s var(--ease)}
+.icon-btn svg{width:14px; height:14px}
+.icon-btn:hover{color:var(--blue); border-color:var(--blue); background:var(--blue-l); transform:translateY(-2px)}
+.icon-btn:active{transform:scale(.9)}
+.actions{display:flex; align-items:center; gap:12px; margin-top:13px}
+.btn{position:relative; overflow:hidden; display:inline-flex; align-items:center; gap:8px;
+  background:var(--blue); color:#fff; text-decoration:none; font-weight:700; font-size:14px;
+  padding:10px 20px; border-radius:999px; letter-spacing:.2px;
+  box-shadow:0 6px 14px rgba(11,87,208,.32);
+  transition:background .25s, transform .25s var(--ease), box-shadow .25s}
+.btn svg{width:13px; height:13px; transition:transform .25s var(--ease)}
+.btn:hover{background:var(--blue-d); transform:translateY(-2px);
+  box-shadow:0 10px 22px rgba(11,87,208,.42)}
+.btn:hover svg{transform:translate(2px,-2px)}
+.btn:active{transform:translateY(0) scale(.98)}
+.hint{font-size:10.5px; color:#8AA0B8; letter-spacing:.4px}
+.ink{position:absolute; border-radius:50%; background:rgba(255,255,255,.45);
+  transform:scale(0); animation:ripple .55s ease-out forwards; pointer-events:none}
+@keyframes ripple{to{transform:scale(1); opacity:0}}
+
+/* ============ FOOTER ============ */
+footer{background:#0B1F33; color:#9FC0E8; margin-top:20px}
+.foot-inner{display:grid; grid-template-columns:1.2fr 1fr; gap:44px;
+  padding:clamp(40px,6vw,60px) 0 34px}
+.foot-brand h4{font-family:var(--font-d); color:#fff; font-size:19px; font-weight:800; margin-bottom:10px}
+.foot-brand p{font-size:13.5px; max-width:38ch; line-height:1.7}
+.foot-ls{font-size:12.5px; line-height:2.1}
+.foot-ls .cmd{color:#5E87B0; display:block; margin-bottom:6px}
+.foot-ls a{color:#9FC0E8; text-decoration:none; transition:.2s}
+.foot-ls a:hover{color:#fff; text-decoration:underline; text-underline-offset:4px}
+.foot-ls a::before{content:'→ '; color:var(--cyan)}
+.foot-bottom{border-top:1px solid rgba(255,255,255,.12); padding:20px 0 26px;
+  display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;
+  font-family:var(--mono); font-size:11.5px; color:#5E87B0}
+.to-top{font-family:var(--mono); font-size:11.5px; color:#9FC0E8; border:1px solid rgba(255,255,255,.25);
+  padding:6px 14px; border-radius:999px; transition:.25s var(--ease)}
+.to-top:hover{color:#fff; border-color:#fff; transform:translateY(-2px)}
+@media(max-width:760px){.foot-inner{grid-template-columns:1fr; gap:30px}}
+
+/* ============ TOAST / MISC ============ */
+.toast{position:fixed; left:50%; bottom:30px; z-index:99; transform:translate(-50%,90px);
+  opacity:0; background:var(--navy); color:#fff; font-family:var(--mono); font-size:12.5px;
+  padding:11px 20px; border-radius:999px; box-shadow:0 14px 34px rgba(10,37,64,.4);
+  transition:.4s var(--ease); pointer-events:none}
+.toast.show{transform:translate(-50%,0); opacity:1}
+noscript .ns{max-width:640px; margin:40px auto; padding:24px; background:#fff;
+  border:1px solid var(--line); border-radius:12px; text-align:center}
+
+/* ============ RESPONSIVE / MOTION ============ */
+@media(max-width:920px){
+  .hero{grid-template-columns:1fr; padding-top:40px}
+  .hero-stage{height:400px; max-width:520px; margin:0 auto; width:100%}
+}
+@media(max-width:560px){
+  .hero-stage{height:360px}
+  .m1{width:200px} .m2{width:180px} .m3{width:176px}
+  .fc2{display:none}
+  .stats{gap:20px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important; transition:none!important}
+  [data-a],.card{opacity:1!important}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="bg" aria-hidden="true"></div>
+
+<!-- ============ TOP BAR ============ -->
+<header class="topbar" id="topbar">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="web-templates home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="2" fill="#fff"/><rect x="13" y="3" width="8" height="8" rx="2" fill="#fff" opacity=".75"/><rect x="3" y="13" width="8" height="8" rx="2" fill="#fff" opacity=".75"/><rect x="13" y="13" width="8" height="8" rx="2" fill="#fff" opacity=".5"/></svg>
+      </span>
+      <span class="brand-name">web-templates<span class="slash">/</span></span>
+    </a>
+    <div class="top-right">
+      <span class="status"><i class="pulse"></i>self-contained · zero dependencies</span>
+      <span class="clock mono" id="clock" aria-hidden="true">--:--:--</span>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <!-- ============ HERO ============ -->
+  <section class="hero wrap">
+    <div class="hero-copy">
+      <span class="eyebrow" data-a style="--d:0s">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z"/></svg>
+        ~/web-templates/ · 5 files · updated Jul 2026
+      </span>
+      <h1 data-a style="--d:.08s">Premium Web Templates<br><span class="accent">Collection</span></h1>
+      <p class="lede" data-a style="--d:.16s">
+        Five production-ready, <b>single-file pages</b> — from personal finance dashboards to
+        employee time monitoring. No frameworks, no build step, no external requests.
+        Hit <b>View</b> and any template opens in a new tab, ready to use or adapt.
+      </p>
+      <div class="chips" data-a style="--d:.24s" aria-label="Technologies used">
+        <span class="chip"><i></i>HTML5</span>
+        <span class="chip"><i></i>CSS3</span>
+        <span class="chip"><i></i>Vanilla JS</span>
+        <span class="chip"><i></i>Responsive</span>
+        <span class="chip"><i></i>0 dependencies</span>
+      </div>
+      <div class="stats" data-a style="--d:.32s">
+        <div class="stat"><b data-count="5">0</b><span>Templates</span></div>
+        <div class="stat"><b data-count="3">0</b><span>Categories</span></div>
+        <div class="stat"><b data-count="0">0</b><span>Dependencies</span></div>
+        <div class="stat"><b data-count="100" data-suffix="%">0</b><span>Standalone</span></div>
+      </div>
+    </div>
+
+    <div class="hero-stage" data-a style="--d:.2s" aria-hidden="true">
+      <div class="stage-dots"></div>
+      <div class="stack" id="stack">
+        <div class="mini m1">
+          <div class="mini-chrome"><span class="dots"><i></i><i></i><i></i></span><span>financial-tracker</span></div>
+          <div class="m-body"><div class="m-bars">
+            <i style="height:42%"></i><i style="height:66%"></i><i style="height:38%"></i>
+            <i style="height:90%"></i><i style="height:58%"></i><i style="height:72%"></i>
+          </div></div>
+        </div>
+        <div class="mini m2">
+          <div class="mini-chrome"><span class="dots"><i></i><i></i><i></i></span><span>project-task</span></div>
+          <div class="m-body"><div class="m-check">
+            <div class="on"><b></b><s style="width:78%"></s></div>
+            <div class="on"><b></b><s style="width:56%"></s></div>
+            <div><b></b><s style="width:68%"></s></div>
+          </div></div>
+        </div>
+        <div class="mini m3">
+          <div class="mini-chrome"><span class="dots"><i></i><i></i><i></i></span><span>timetrack</span></div>
+          <div class="m-body"><div class="m-clock">
+            <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" fill="#EAF3FF" stroke="#BBD7FF" stroke-width="2.5"/><line x1="32" y1="32" x2="42" y2="37" stroke="#0F2A43" stroke-width="3" stroke-linecap="round"/><line x1="32" y1="32" x2="32" y2="14" stroke="#0B57D0" stroke-width="2.4" stroke-linecap="round"/><circle cx="32" cy="32" r="2.6" fill="#0F2A43"/></svg>
+            <div><b>07:32</b><small>3 online</small></div>
+          </div></div>
+        </div>
+      </div>
+      <span class="file-chip fc1"><i></i>saas.html</span>
+      <span class="file-chip fc2"><i></i>timetrack.html</span>
+      <div class="orbit-wrap">
+        <svg class="orbit" viewBox="0 0 116 116">
+          <defs><path id="circ" d="M58,58 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"/></defs>
+          <text><textPath href="#circ">OPENS IN NEW TAB · SINGLE FILE · ZERO DEPS ·</textPath></text>
+        </svg>
+        <span class="orbit-core">↗</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GALLERY ============ -->
+  <section class="gallery wrap" id="templates">
+    <div class="gallery-head">
+      <div>
+        <h2>Browse the collection</h2>
+        <span class="count mono" id="count">Showing 5 of 5 templates</span>
+      </div>
+      <div class="filters" id="filters" role="group" aria-label="Filter templates by category"></div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <noscript>
+      <div class="ns">
+        <p><strong>JavaScript is disabled.</strong> Here are the templates directly:</p>
+        <ul style="margin-top:12px; line-height:2">
+          <li><a href="web-templates/financial-tracker-basic.html" target="_blank" rel="noopener noreferrer">financial-tracker-basic.html</a></li>
+          <li><a href="web-templates/financial-tracker-premium.html" target="_blank" rel="noopener noreferrer">financial-tracker-premium.html</a></li>
+          <li><a href="web-templates/project-task-premium.html" target="_blank" rel="noopener noreferrer">project-task-premium.html</a></li>
+          <li><a href="web-templates/saas.html" target="_blank" rel="noopener noreferrer">saas.html</a></li>
+          <li><a href="web-templates/timetrack.html" target="_blank" rel="noopener noreferrer">timetrack.html</a></li>
+        </ul>
+      </div>
+    </noscript>
+  </section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="foot-inner">
+      <div class="foot-brand">
+        <h4>web-templates/</h4>
+        <p>A compact library of standalone pages you can open, fork, and ship.
+           Everything runs from a single <span class="mono" style="color:#fff">.html</span> file —
+           styles and scripts included.</p>
+      </div>
+      <div class="foot-ls mono">
+        <span class="cmd">$ ls web-templates/</span>
+        <a href="web-templates/financial-tracker-basic.html" target="_blank" rel="noopener noreferrer">financial-tracker-basic.html</a><br>
+        <a href="web-templates/financial-tracker-premium.html" target="_blank" rel="noopener noreferrer">financial-tracker-premium.html</a><br>
+        <a href="web-templates/project-task-premium.html" target="_blank" rel="noopener noreferrer">project-task-premium.html</a><br>
+        <a href="web-templates/saas.html" target="_blank" rel="noopener noreferrer">saas.html</a><br>
+        <a href="web-templates/timetrack.html" target="_blank" rel="noopener noreferrer">timetrack.html</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Premium Web Templates · crafted with vanilla HTML, CSS &amp; JS</span>
+      <button class="to-top" id="toTop">back to top ↑</button>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status">Path copied to clipboard</div>
+
+<script>
+/* ================= DATA ================= */
+const TEMPLATES = [
+  {
+    file: 'financial-tracker-basic.html',
+    title: 'Financial Tracker',
+    cat: 'finance', catLabel: 'Finance',
+    badge: 'Basic', badgeClass: 'b-basic',
+    desc: 'Personal income & expense dashboard with monthly bar charts, category breakdowns and a running balance.',
+    screen: 'bars'
+  },
+  {
+    file: 'financial-tracker-premium.html',
+    title: 'Financial Tracker Pro',
+    cat: 'finance', catLabel: 'Finance',
+    badge: 'Premium', badgeClass: 'b-premium',
+    desc: 'The full suite — portfolio allocation donut, cash-flow sparklines, budget goals, recurring bills and CSV export.',
+    screen: 'donut', featured: true
+  },
+  {
+    file: 'project-task-premium.html',
+    title: 'Project Task Manager',
+    cat: 'productivity', catLabel: 'Productivity',
+    badge: 'Premium', badgeClass: 'b-premium',
+    desc: 'Kanban-style task board with priorities, due dates, live progress bars and a team workload overview.',
+    screen: 'kanban'
+  },
+  {
+    file: 'saas.html',
+    title: 'SaaS Landing Page',
+    cat: 'marketing', catLabel: 'Marketing',
+    badge: 'Sample', badgeClass: 'b-sample',
+    desc: 'Conversion-ready marketing page — hero, feature grid, three-tier pricing and signup CTA, all in one file.',
+    screen: 'saas'
+  },
+  {
+    file: 'timetrack.html',
+    title: 'TimeTrack',
+    cat: 'productivity', catLabel: 'Productivity',
+    badge: 'Staff tool', badgeClass: 'b-staff',
+    desc: 'Employee time monitoring — daily activity timelines, attendance status, overtime flags and weekly reports.',
+    screen: 'time'
+  }
+];
+
+const CATS = [
+  ['all', 'All'],
+  ['finance', 'Finance'],
+  ['productivity', 'Productivity'],
+  ['marketing', 'Marketing']
+];
+
+/* ================= MOCK PREVIEWS ================= */
+const SCREENS = {
+  bars: `
+    <div class="s-head"><span class="s-label">Monthly balance</span><span class="s-amount mono">$8,420</span></div>
+    <div class="s-chart">
+      <i class="bar" style="--h:42%;--i:0"></i><i class="bar" style="--h:66%;--i:1"></i>
+      <i class="bar" style="--h:38%;--i:2"></i>
+      <i class="bar hot" style="--h:88%;--i:3"><em class="mono">JUL</em></i>
+      <i class="bar" style="--h:58%;--i:4"></i><i class="bar" style="--h:72%;--i:5"></i>
+    </div>
+    <div class="s-foot mono"><span><b>▲</b> Income +12%</span><span><s>▼</s> Expenses −8%</span></div>`,
+  donut: `
+    <div class="s-donut-wrap">
+      <div class="donut"><span class="mono">42%</span></div>
+      <div class="d-side">
+        <span class="pill up mono">▲ Income +12%</span>
+        <span class="pill down mono">▼ Spent −8%</span>
+        <svg class="spark" viewBox="0 0 120 36" preserveAspectRatio="none">
+          <polyline class="base" points="0,28 15,22 30,26 45,14 60,18 75,8 90,12 105,5 120,9"/>
+          <polyline class="live" pathLength="100" points="0,28 15,22 30,26 45,14 60,18 75,8 90,12 105,5 120,9"/>
+        </svg>
+      </div>
+    </div>
+    <div class="s-legend mono">
+      <span><i style="--c:#0B57D0"></i>Bills 42%</span>
+      <span><i style="--c:#00A3FF"></i>Savings 28%</span>
+      <span><i style="--c:#9CC3FF"></i>Lifestyle 18%</span>
+    </div>`,
+  kanban: `
+    <div class="kb-col">
+      <span class="kb-h mono">TO DO</span>
+      <div class="kb-card"><div class="row"><i class="dot d-amber"></i><span class="ln" style="width:78%"></span></div><span class="ln" style="width:48%"></span></div>
+      <div class="kb-card"><div class="row"><i class="dot d-blue"></i><span class="ln" style="width:62%"></span></div></div>
+    </div>
+    <div class="kb-col">
+      <span class="kb-h mono">DOING</span>
+      <div class="kb-card"><span class="ln" style="width:72%"></span><div class="prog"><b></b></div></div>
+      <div class="kb-card"><span class="ln" style="width:52%"></span></div>
+    </div>
+    <div class="kb-col">
+      <span class="kb-h mono">DONE</span>
+      <div class="kb-card"><div class="row"><i class="chk">✓</i><span class="ln" style="width:66%"></span></div></div>
+      <div class="kb-card"><div class="row"><i class="chk">✓</i><span class="ln" style="width:42%"></span></div></div>
+    </div>`,
+  saas: `
+    <div class="sx-nav"><i class="sx-logo"></i><span class="sx-links"><b></b><b></b><b></b></span><span class="sx-cta mono">Sign up</span></div>
+    <div class="sx-hero">
+      <span class="sx-h1"></span><span class="sx-h1 short"></span>
+      <span class="sx-sub"></span><span class="sx-btn"></span>
+    </div>
+    <div class="sx-price">
+      <span class="tier"></span>
+      <span class="tier hot"><em class="mono">POPULAR</em></span>
+      <span class="tier"></span>
+    </div>`,
+  time: `
+    <div class="tt-grid">
+      <div class="tt-rows">
+        <div class="tt-row">
+          <i class="ava" style="--c:#0B57D0">JD</i>
+          <div class="tt-main"><span class="ln"></span><div class="tbar" style="--w:78%;--c:#4C8DFF"><b></b></div></div>
+          <span class="hrs mono">7.5h</span>
+        </div>
+        <div class="tt-row">
+          <i class="ava" style="--c:#00A3FF">MK</i>
+          <div class="tt-main"><span class="ln" style="width:52px"></span><div class="tbar" style="--w:92%;--c:#F5A623"><b></b></div></div>
+          <span class="hrs mono">8.9h <em class="ot">OT</em></span>
+        </div>
+        <div class="tt-row">
+          <i class="ava" style="--c:#7FB4FF">AL</i>
+          <div class="tt-main"><span class="ln" style="width:44px"></span><div class="tbar" style="--w:54%;--c:#4C8DFF"><b></b></div></div>
+          <span class="hrs mono">5.2h</span>
+        </div>
+      </div>
+      <div class="tt-clock">
+        <svg class="tt-svg" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="27" fill="#EAF3FF" stroke="#BBD7FF" stroke-width="2.5"/>
+          <line class="hand hr" x1="32" y1="32" x2="42" y2="37" stroke="#0F2A43" stroke-width="3" stroke-linecap="round"/>
+          <line class="hand mn" x1="32" y1="32" x2="32" y2="14" stroke="#0B57D0" stroke-width="2.4" stroke-linecap="round"/>
+          <circle cx="32" cy="32" r="2.6" fill="#0F2A43"/>
+        </svg>
+        <span class="tt-status mono"><i class="g-dot"></i>3 online</span>
+      </div>
+    </div>`
+};
+
+/* ================= RENDER CARDS ================= */
+const grid = document.getElementById('grid');
+const COPY_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+const ARROW_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>';
+
+grid.innerHTML = TEMPLATES.map((t, i) => `
+  <article class="card${t.featured ? ' card--featured' : ''}" data-cat="${t.cat}" style="--d:${i * 80}ms">
+    <div class="shot">
+      ${t.featured ? '<span class="ribbon mono">★ FEATURED</span>' : ''}
+      <div class="chrome">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="url mono">web-templates/${t.file}</span>
+      </div>
+      <div class="screen sc-${t.screen}">${SCREENS[t.screen]}</div>
+    </div>
+    <div class="body">
+      <div class="tags">
+        <span class="cat">${t.catLabel}</span>
+        <span class="badge ${t.badgeClass}">${t.badge}</span>
+      </div>
+      <h3>${t.title}</h3>
+      <p>${t.desc}</p>
+      <div class="meta">
+        <code>${t.file}</code>
+        <button class="icon-btn copy-btn" data-path="web-templates/${t.file}"
+                title="Copy file path" aria-label="Copy path for ${t.file}">${COPY_SVG}</button>
+      </div>
+      <div class="actions">
+        <a class="btn" href="web-templates/${t.file}" target="_blank" rel="noopener noreferrer">
+          View ${ARROW_SVG}
+        </a>
+        <span class="hint mono">opens in new tab</span>
+      </div>
+    </div>
+  </article>`).join('');
+
+/* ================= SCROLL REVEAL ================= */
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.card').forEach(c => io.observe(c));
+
+grid.addEventListener('animationend', e => {
+  if (e.target.classList && e.target.classList.contains('card')) e.target.classList.add('settled');
+});
+
+/* ================= FILTERS ================= */
+const filtersEl = document.getElementById('filters');
+const countEl = document.getElementById('count');
+const total = TEMPLATES.length;
+
+filtersEl.innerHTML = CATS.map(([key, label]) => {
+  const n = key === 'all' ? total : TEMPLATES.filter(t => t.cat === key).length;
+  return `<button class="fbtn${key === 'all' ? ' active' : ''}" data-filter="${key}" aria-pressed="${key === 'all'}">
+            ${label} <em>${n}</em>
+          </button>`;
+}).join('');
+
+filtersEl.addEventListener('click', e => {
+  const btn = e.target.closest('.fbtn');
+  if (!btn) return;
+  filtersEl.querySelectorAll('.fbtn').forEach(b => {
+    b.classList.toggle('active', b === btn);
+    b.setAttribute('aria-pressed', b === btn);
+  });
+  const f = btn.dataset.filter;
+  let shown = 0;
+  document.querySelectorAll('.card').forEach(card => {
+    const match = f === 'all' || card.dataset.cat === f;
+    card.classList.toggle('hide', !match);
+    if (match) {
+      card.classList.remove('in', 'settled');
+      card.style.setProperty('--d', (shown++ * 70) + 'ms');
+      void card.offsetWidth;           /* restart entrance animation */
+      card.classList.add('in');
+    }
+  });
+  countEl.textContent = `Showing ${shown} of ${total} template${shown === 1 ? '' : 's'}`;
+  countEl.classList.remove('pop'); void countEl.offsetWidth; countEl.classList.add('pop');
+});
+
+/* ================= MATERIAL RIPPLE ================= */
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.btn, .fbtn');
+  if (!btn) return;
+  const r = btn.getBoundingClientRect();
+  const d = Math.max(r.width, r.height) * 2.1;
+  const ink = document.createElement('span');
+  ink.className = 'ink';
+  ink.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
+  btn.style.position = 'relative'; btn.style.overflow = 'hidden';
+  btn.appendChild(ink);
+  ink.addEventListener('animationend', () => ink.remove());
+});
+
+/* ================= COPY PATH + TOAST ================= */
+const toast = document.getElementById('toast');
+let toastTimer;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 1900);
+}
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.copy-btn');
+  if (!btn) return;
+  const path = btn.dataset.path;
+  const done = () => showToast('Copied · ' + path);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(path).then(done).catch(done);
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = path; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (_) {}
+    ta.remove(); done();
+  }
+});
+
+/* ================= LIVE CLOCK ================= */
+const clockEl = document.getElementById('clock');
+const pad = n => String(n).padStart(2, '0');
+function tickClock() {
+  const d = new Date();
+  clockEl.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+tickClock(); setInterval(tickClock, 1000);
+
+/* ================= COUNT-UP STATS ================= */
+document.querySelectorAll('[data-count]').forEach(el => {
+  const target = +el.dataset.count, suffix = el.dataset.suffix || '';
+  const t0 = performance.now(), dur = 950;
+  (function step(now) {
+    const p = Math.min((now - t0) / dur, 1);
+    el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))) + suffix;
+    if (p < 1) requestAnimationFrame(step);
+  })(t0);
+});
+
+/* ================= TOPBAR SHADOW / BACK-TO-TOP ================= */
+const topbar = document.getElementById('topbar');
+addEventListener('scroll', () => topbar.classList.toggle('scrolled', scrollY > 8), { passive: true });
+document.getElementById('toTop').addEventListener('click', () =>
+  scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }));
+
+/* ================= HERO PARALLAX ================= */
+const stage = document.querySelector('.hero-stage'), stack = document.getElementById('stack');
+if (stage && matchMedia('(pointer: fine)').matches &&
+    !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  stage.addEventListener('mousemove', e => {
+    const r = stage.getBoundingClientRect();
+    stack.style.setProperty('--px', ((e.clientX - r.left) / r.width - .5).toFixed(3));
+    stack.style.setProperty('--py', ((e.clientY - r.top) / r.height - .5).toFixed(3));
+  });
+  stage.addEventListener('mouseleave', () => {
+    stack.style.setProperty('--px', 0); stack.style.setProperty('--py', 0);
+  });
+}
+</script>
+</body>
+</html>
