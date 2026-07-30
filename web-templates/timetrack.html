@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TimeTrack — Employee Daily Monitoring</title>
+<style>
+  /* ---------- Design Tokens ---------- */
+  :root {
+    --primary: #1976d2;
+    --primary-dark: #1565c0;
+    --primary-light: #e3f2fd;
+    --accent: #0288d1;
+    --success: #2e7d32;
+    --warning: #ef6c00;
+    --danger: #c62828;
+    --text: #212121;
+    --text-secondary: #616161;
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --border: #e0e0e0;
+    --shadow-1: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-2: 0 4px 6px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.06);
+    --shadow-3: 0 10px 20px rgba(0,0,0,0.10), 0 6px 6px rgba(0,0,0,0.06);
+    --radius: 8px;
+    --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- App Shell ---------- */
+  .app { display: flex; flex-direction: column; min-height: 100vh; }
+
+  header.appbar {
+    background: var(--primary);
+    color: #fff;
+    padding: 0 24px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow-2);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; font-size: 1.25rem; font-weight: 500; letter-spacing: 0.3px; }
+  .brand-logo {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #fff; color: var(--primary);
+    display: grid; place-items: center; font-weight: 700;
+  }
+
+  nav.tabs { display: flex; gap: 4px; }
+  nav.tabs button {
+    background: transparent; border: none; color: rgba(255,255,255,0.85);
+    padding: 10px 18px; font-size: 0.95rem; font-weight: 500;
+    border-radius: 6px; cursor: pointer;
+    transition: background var(--transition), color var(--transition);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  nav.tabs button:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  nav.tabs button.active { background: rgba(255,255,255,0.2); color: #fff; }
+
+  .menu-toggle { display: none; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; }
+
+  main.content { flex: 1; padding: 24px; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+  .view { display: none; animation: fadeIn 0.3s ease; }
+  .view.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ---------- Cards ---------- */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-1);
+    padding: 24px;
+    margin-bottom: 20px;
+    transition: box-shadow var(--transition);
+  }
+  .card:hover { box-shadow: var(--shadow-2); }
+  .card h2 { font-size: 1.15rem; font-weight: 500; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .card h2::before { content: ''; width: 4px; height: 20px; background: var(--primary); border-radius: 2px; }
+
+  /* ---------- Dashboard ---------- */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-1);
+    border-left: 4px solid var(--primary);
+    transition: transform var(--transition), box-shadow var(--transition);
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+  .stat-card.accent { border-left-color: var(--accent); }
+  .stat-card.success { border-left-color: var(--success); }
+  .stat-card.warning { border-left-color: var(--warning); }
+  .stat-label { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .stat-value { font-size: 2rem; font-weight: 500; color: var(--text); }
+  .stat-sub { font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px; }
+
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+  }
+  .chart-wrap { position: relative; width: 100%; }
+  canvas { width: 100%; height: auto; display: block; }
+
+  /* ---------- Forms ---------- */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  .field { display: flex; flex-direction: column; }
+  .field label {
+    font-size: 0.85rem; color: var(--text-secondary);
+    margin-bottom: 6px; font-weight: 500;
+  }
+  .field input, .field select {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color var(--transition), box-shadow var(--transition);
+    background: #fff;
+  }
+  .field input:focus, .field select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(25,118,210,0.15);
+  }
+
+  .btn {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background var(--transition), box-shadow var(--transition), transform var(--transition);
+    font-family: inherit;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { background: var(--primary-dark); box-shadow: var(--shadow-2); }
+  .btn-secondary { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+  .btn-secondary:hover { background: var(--primary-light); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #b71c1c; }
+  .btn:active { transform: scale(0.98); }
+
+  .form-actions { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+
+  /* ---------- Table ---------- */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  thead { background: var(--primary-light); }
+  th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { font-weight: 500; color: var(--primary-dark); text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.5px; }
+  tbody tr { transition: background var(--transition); }
+  tbody tr:hover { background: #fafbfc; }
+  .overtime { color: var(--warning); font-weight: 600; }
+  .regular { color: var(--success); font-weight: 500; }
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 0.75rem; font-weight: 500;
+  }
+  .badge-ot { background: #fff3e0; color: var(--warning); }
+  .badge-reg { background: #e8f5e9; color: var(--success); }
+  .delete-btn {
+    background: none; border: none; color: var(--danger);
+    cursor: pointer; font-size: 1.1rem; padding: 4px 8px;
+    border-radius: 4px; transition: background var(--transition);
+  }
+  .delete-btn:hover { background: #ffebee; }
+
+  /* ---------- Reports ---------- */
+  .filter-bar {
+    display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;
+    margin-bottom: 20px; padding: 16px;
+    background: var(--primary-light); border-radius: var(--radius);
+  }
+  .filter-bar .field { flex: 1; min-width: 160px; }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #323232; color: #fff; padding: 12px 24px;
+    border-radius: 6px; box-shadow: var(--shadow-3);
+    font-size: 0.9rem; z-index: 1000;
+    opacity: 0; pointer-events: none;
+    transition: opacity var(--transition), transform var(--transition);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-8px); }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 900px) {
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 720px) {
+    .menu-toggle { display: block; }
+    nav.tabs {
+      position: absolute; top: 64px; right: 0;
+      background: var(--primary); flex-direction: column;
+      width: 220px; padding: 12px;
+      box-shadow: var(--shadow-3);
+      border-radius: 0 0 0 8px;
+      display: none;
+    }
+    nav.tabs.open { display: flex; }
+    nav.tabs button { text-align: left; width: 100%; }
+    main.content { padding: 16px; }
+    .stat-value { font-size: 1.6rem; }
+    th, td { padding: 10px 8px; font-size: 0.85rem; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ APP BAR ============ -->
+  <header class="appbar">
+    <div class="brand">
+      <div class="brand-logo">T</div>
+      <span>TimeTrack</span>
+    </div>
+    <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+    <nav class="tabs" id="tabs">
+      <button data-view="dashboard" class="active">Dashboard</button>
+      <button data-view="entry">Time Entry</button>
+      <button data-view="reports">Reports</button>
+    </nav>
+  </header>
+
+  <main class="content">
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="view active" id="view-dashboard">
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <div class="charts-grid">
+        <div class="card">
+          <h2>Daily Hours — Last 7 Days</h2>
+          <div class="chart-wrap"><canvas id="barChart" width="800" height="360"></canvas></div>
+        </div>
+        <div class="card">
+          <h2>Overtime Distribution</h2>
+          <div class="chart-wrap"><canvas id="donutChart" width="400" height="360"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Recent Logs</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Employee</th><th>Time In</th><th>Time Out</th><th>Hours</th><th>Status</th></tr>
+            </thead>
+            <tbody id="recentLogs"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TIME ENTRY ============ -->
+    <section class="view" id="view-entry">
+      <div class="card">
+        <h2>Log New Entry</h2>
+        <form id="entryForm">
+          <div class="form-grid">
+            <div class="field">
+              <label for="empName">Employee Name</label>
+              <input type="text" id="empName" list="empList" placeholder="e.g. Jane Doe" required />
+              <datalist id="empList"></datalist>
+            </div>
+            <div class="field">
+              <label for="entryDate">Date</label>
+              <input type="date" id="entryDate" required />
+            </div>
+            <div class="field">
+              <label for="timeIn">Time In</label>
+              <input type="time" id="timeIn" required />
+            </div>
+            <div class="field">
+              <label for="timeOut">Time Out</label>
+              <input type="time" id="timeOut" required />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Entry</button>
+            <button type="reset" class="btn btn-secondary">Clear</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>All Time Logs</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Employee</th><th>Time In</th><th>Time Out</th><th>Hours</th><th>Overtime</th><th></th></tr>
+            </thead>
+            <tbody id="allLogs"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ REPORTS ============ -->
+    <section class="view" id="view-reports">
+      <div class="card">
+        <h2>Report Filters</h2>
+        <div class="filter-bar">
+          <div class="field">
+            <label for="filterFrom">From</label>
+            <input type="date" id="filterFrom" />
+          </div>
+          <div class="field">
+            <label for="filterTo">To</label>
+            <input type="date" id="filterTo" />
+          </div>
+          <div class="field">
+            <label for="filterEmp">Employee</label>
+            <select id="filterEmp"><option value="">All Employees</option></select>
+          </div>
+          <button class="btn btn-primary" id="applyFilter">Apply</button>
+        </div>
+      </div>
+
+      <div class="stats-grid" id="reportStats"></div>
+
+      <div class="charts-grid">
+        <div class="card">
+          <h2>Total Hours per Employee</h2>
+          <div class="chart-wrap"><canvas id="empBarChart" width="800" height="360"></canvas></div>
+        </div>
+        <div class="card">
+          <h2>Overtime Trend</h2>
+          <div class="chart-wrap"><canvas id="trendChart" width="400" height="360"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Employee Summary</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Employee</th><th>Entries</th><th>Total Hours</th><th>Regular</th><th>Overtime</th><th>Avg / Day</th></tr>
+            </thead>
+            <tbody id="summaryTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   TimeTrack — Vanilla JS App
+   ============================================================ */
+
+const STORAGE_KEY = 'timetrack_entries_v1';
+const OVERTIME_THRESHOLD = 8; // hours per day
+
+/* ---------- State ---------- */
+let entries = loadEntries();
+let currentFilter = { from: '', to: '', emp: '' };
+
+function loadEntries() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch { return []; }
+}
+function saveEntries() { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); }
+
+/* ---------- Utilities ---------- */
+function calcHours(timeIn, timeOut) {
+  const [h1, m1] = timeIn.split(':').map(Number);
+  const [h2, m2] = timeOut.split(':').map(Number);
+  let mins = (h2 * 60 + m2) - (h1 * 60 + m1);
+  if (mins < 0) mins += 24 * 60; // overnight shift
+  return +(mins / 60).toFixed(2);
+}
+function fmtHours(h) { return h.toFixed(2) + 'h'; }
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+function uniqueEmployees() {
+  return [...new Set(entries.map(e => e.name))].sort();
+}
+function filteredEntries() {
+  return entries.filter(e => {
+    if (currentFilter.from && e.date < currentFilter.from) return false;
+    if (currentFilter.to && e.date > currentFilter.to) return false;
+    if (currentFilter.emp && e.name !== currentFilter.emp) return false;
+    return true;
+  });
+}
+
+/* ---------- Navigation ---------- */
+document.querySelectorAll('#tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    document.getElementById('tabs').classList.remove('open');
+    renderAll();
+  });
+});
+document.getElementById('menuToggle').addEventListener('click', () => {
+  document.getElementById('tabs').classList.toggle('open');
+});
+
+/* ---------- Time Entry Form ---------- */
+const entryForm = document.getElementById('entryForm');
+document.getElementById('entryDate').valueAsDate = new Date();
+
+entryForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const name = document.getElementById('empName').value.trim();
+  const date = document.getElementById('entryDate').value;
+  const timeIn = document.getElementById('timeIn').value;
+  const timeOut = document.getElementById('timeOut').value;
+  if (!name || !date || !timeIn || !timeOut) return;
+
+  entries.push({
+    id: Date.now() + Math.random(),
+    name, date, timeIn, timeOut,
+    hours: calcHours(timeIn, timeOut)
+  });
+  saveEntries();
+  entryForm.reset();
+  document.getElementById('entryDate').valueAsDate = new Date();
+  toast('Entry saved successfully');
+  renderAll();
+});
+
+/* ---------- Render: Dashboard ---------- */
+function renderDashboard() {
+  const today = new Date().toISOString().slice(0, 10);
+  const todayEntries = entries.filter(e => e.date === today);
+  const totalToday = todayEntries.reduce((s, e) => s + e.hours, 0);
+  const otToday = todayEntries.reduce((s, e) => s + Math.max(0, e.hours - OVERTIME_THRESHOLD), 0);
+  const totalAll = entries.reduce((s, e) => s + e.hours, 0);
+  const otAll = entries.reduce((s, e) => s + Math.max(0, e.hours - OVERTIME_THRESHOLD), 0);
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Today's Entries</div>
+      <div class="stat-value">${todayEntries.length}</div>
+      <div class="stat-sub">${new Date().toLocaleDateString()}</div>
+    </div>
+    <div class="stat-card accent">
+      <div class="stat-label">Hours Today</div>
+      <div class="stat-value">${fmtHours(totalToday)}</div>
+      <div class="stat-sub">${todayEntries.length} log(s)</div>
+    </div>
+    <div class="stat-card warning">
+      <div class="stat-label">Overtime Today</div>
+      <div class="stat-value">${fmtHours(otToday)}</div>
+      <div class="stat-sub">>${OVERTIME_THRESHOLD}h threshold</div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-label">Total Employees</div>
+      <div class="stat-value">${uniqueEmployees().length}</div>
+      <div class="stat-sub">${entries.length} total entries</div>
+    </div>
+  `;
+
+  // Recent logs (last 10)
+  const recent = [...entries].sort((a, b) => (b.date + b.timeIn).localeCompare(a.date + a.timeIn)).slice(0, 10);
+  document.getElementById('recentLogs').innerHTML = recent.map(e => {
+    const ot = Math.max(0, e.hours - OVERTIME_THRESHOLD);
+    const isOT = ot > 0;
+    return `<tr>
+      <td>${e.date}</td>
+      <td>${escapeHtml(e.name)}</td>
+      <td>${e.timeIn}</td>
+      <td>${e.timeOut}</td>
+      <td class="${isOT ? 'overtime' : 'regular'}">${fmtHours(e.hours)}</td>
+      <td>${isOT ? `<span class="badge badge-ot">OT +${fmtHours(ot)}</span>` : `<span class="badge badge-reg">Regular</span>`}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:24px;">No entries yet. Start logging time!</td></tr>';
+
+  drawBarChart();
+  drawDonutChart();
+}
+
+/* ---------- Render: Time Entry list ---------- */
+function renderEntryList() {
+  const sorted = [...entries].sort((a, b) => (b.date + b.timeIn).localeCompare(a.date + a.timeIn));
+  document.getElementById('allLogs').innerHTML = sorted.map(e => {
+    const ot = Math.max(0, e.hours - OVERTIME_THRESHOLD);
+    const isOT = ot > 0;
+    return `<tr>
+      <td>${e.date}</td>
+      <td>${escapeHtml(e.name)}</td>
+      <td>${e.timeIn}</td>
+      <td>${e.timeOut}</td>
+      <td class="${isOT ? 'overtime' : 'regular'}">${fmtHours(e.hours)}</td>
+      <td>${isOT ? `<span class="badge badge-ot">+${fmtHours(ot)}</span>` : `<span class="badge badge-reg">—</span>`}</td>
+      <td><button class="delete-btn" data-id="${e.id}" title="Delete">✕</button></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:24px;">No entries yet.</td></tr>';
+
+  document.querySelectorAll('.delete-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      if (!confirm('Delete this entry?')) return;
+      entries = entries.filter(e => e.id != b.dataset.id);
+      saveEntries();
+      renderAll();
+      toast('Entry deleted');
+    });
+  });
+
+  // Datalist of known employees
+  const dl = document.getElementById('empList');
+  dl.innerHTML = uniqueEmployees().map(n => `<option value="${escapeHtml(n)}">`).join('');
+}
+
+/* ---------- Render: Reports ---------- */
+function renderReports() {
+  // Populate employee filter
+  const sel = document.getElementById('filterEmp');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All Employees</option>' +
+    uniqueEmployees().map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  sel.value = cur;
+
+  const data = filteredEntries();
+  const totalHours = data.reduce((s, e) => s + e.hours, 0);
+  const totalOT = data.reduce((s, e) => s + Math.max(0, e.hours - OVERTIME_THRESHOLD), 0);
+  const avgPerDay = data.length ? (totalHours / new Set(data.map(e => e.date)).size) : 0;
+
+  document.getElementById('reportStats').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Filtered Entries</div>
+      <div class="stat-value">${data.length}</div>
+    </div>
+    <div class="stat-card accent">
+      <div class="stat-label">Total Hours</div>
+      <div class="stat-value">${fmtHours(totalHours)}</div>
+    </div>
+    <div class="stat-card warning">
+      <div class="stat-label">Total Overtime</div>
+      <div class="stat-value">${fmtHours(totalOT)}</div>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-label">Avg Hours / Day</div>
+      <div class="stat-value">${fmtHours(avgPerDay)}</div>
+    </div>
+  `;
+
+  // Summary per employee
+  const byEmp = {};
+  data.forEach(e => {
+    if (!byEmp[e.name]) byEmp[e.name] = { entries: 0, hours: 0, ot: 0, days: new Set() };
+    byEmp[e.name].entries++;
+    byEmp[e.name].hours += e.hours;
+    byEmp[e.name].ot += Math.max(0, e.hours - OVERTIME_THRESHOLD);
+    byEmp[e.name].days.add(e.date);
+  });
+  document.getElementById('summaryTable').innerHTML = Object.entries(byEmp).map(([name, s]) => `
+    <tr>
+      <td><strong>${escapeHtml(name)}</strong></td>
+      <td>${s.entries}</td>
+      <td>${fmtHours(s.hours)}</td>
+      <td>${fmtHours(s.hours - s.ot)}</td>
+      <td class="overtime">${fmtHours(s.ot)}</td>
+      <td>${fmtHours(s.hours / s.days.size)}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:24px;">No data for selected filters.</td></tr>';
+
+  drawEmpBarChart(data);
+  drawTrendChart(data);
+}
+
+document.getElementById('applyFilter').addEventListener('click', () => {
+  currentFilter.from = document.getElementById('filterFrom').value;
+  currentFilter.to = document.getElementById('filterTo').value;
+  currentFilter.emp = document.getElementById('filterEmp').value;
+  renderReports();
+});
+
+/* ============================================================
+   Canvas Charts (pure native API)
+   ============================================================ */
+function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, w: rect.width, h: rect.height };
+}
+
+/* Bar chart — last 7 days total hours */
+function drawBarChart() {
+  const canvas = document.getElementById('barChart');
+  const { ctx, w, h } = setupCanvas(canvas);
+  if (w === 0 || h === 0) return; // Guard against hidden canvas
+  ctx.clearRect(0, 0, w, h);
+
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0, 10));
+  }
+  const totals = days.map(d => entries.filter(e => e.date === d).reduce((s, e) => s + e.hours, 0));
+  const otTotals = days.map(d => entries.filter(e => e.date === d).reduce((s, e) => s + Math.max(0, e.hours - OVERTIME_THRESHOLD), 0));
+
+  const pad = { t: 20, r: 20, b: 50, l: 50 };
+  const chartW = w - pad.l - pad.r;
+  const chartH = h - pad.t - pad.b;
+  const maxVal = Math.max(10, ...totals) * 1.1;
+
+  // Grid
+  ctx.strokeStyle = '#eee'; ctx.lineWidth = 1;
+  ctx.fillStyle = '#999'; ctx.font = '11px Roboto, sans-serif';
+  for (let i = 0; i <= 5; i++) {
+    const y = pad.t + (chartH / 5) * i;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + chartW, y); ctx.stroke();
+    const v = (maxVal - (maxVal / 5) * i).toFixed(1);
+    ctx.textAlign = 'right'; ctx.fillText(v + 'h', pad.l - 6, y + 4);
+  }
+
+  // Bars
+  const barW = chartW / days.length * 0.6;
+  const gap = chartW / days.length;
+  totals.forEach((val, i) => {
+    const x = pad.l + gap * i + (gap - barW) / 2;
+    const barH = (val / maxVal) * chartH;
+    const y = pad.t + chartH - barH;
+
+    // Regular portion
+    const regH = (Math.min(val, OVERTIME_THRESHOLD) / maxVal) * chartH;
+    ctx.fillStyle = '#1976d2';
+    ctx.fillRect(x, pad.t + chartH - regH, barW, regH);
+    // OT portion
+    if (val > OVERTIME_THRESHOLD) {
+      const otH = ((val - OVERTIME_THRESHOLD) / maxVal) * chartH;
+      ctx.fillStyle = '#ef6c00';
+      ctx.fillRect(x, y, barW, otH);
+    }
+
+    // Value label
+    if (val > 0) {
+      ctx.fillStyle = '#333'; ctx.textAlign = 'center';
+      ctx.fillText(val.toFixed(1) + 'h', x + barW / 2, y - 6);
+    }
+
+    // X label
+    const d = new Date(days[i]);
+    ctx.fillStyle = '#666'; ctx.textAlign = 'center';
+    ctx.fillText(d.toLocaleDateString(undefined, { weekday: 'short' }), x + barW / 2, pad.t + chartH + 18);
+    ctx.fillText(d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), x + barW / 2, pad.t + chartH + 32);
+  });
+
+  // Legend
+  ctx.font = '11px Roboto, sans-serif';
+  ctx.fillStyle = '#1976d2'; ctx.fillRect(pad.l, h - 14, 12, 12);
+  ctx.fillStyle = '#333'; ctx.textAlign = 'left'; ctx.fillText('Regular', pad.l + 18, h - 4);
+  ctx.fillStyle = '#ef6c00'; ctx.fillRect(pad.l + 80, h - 14, 12, 12);
+  ctx.fillStyle = '#333'; ctx.fillText('Overtime', pad.l + 98, h - 4);
+}
+
+/* Donut chart — OT vs Regular */
+function drawDonutChart() {
+  const canvas = document.getElementById('donutChart');
+  const { ctx, w, h } = setupCanvas(canvas);
+  if (w === 0 || h === 0) return; // Guard against hidden canvas
+  ctx.clearRect(0, 0, w, h);
+
+  const total = entries.reduce((s, e) => s + e.hours, 0);
+  const ot = entries.reduce((s, e) => s + Math.max(0, e.hours - OVERTIME_THRESHOLD), 0);
+  const reg = total - ot;
+
+  const data = [
+    { label: 'Regular', value: reg, color: '#1976d2' },
+    { label: 'Overtime', value: ot, color: '#ef6c00' }
+  ];
+
+  const cx = w / 2, cy = h / 2 - 10;
+  const r = Math.min(w, h) / 2 - 40;
+  if (r <= 0) return; // Guard against negative radius
+  const inner = r * 0.6;
+  const sum = data.reduce((s, d) => s + d.value, 0) || 1;
+
+  let start = -Math.PI / 2;
+  data.forEach(d => {
+    const angle = (d.value / sum) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, start, start + angle);
+    ctx.closePath();
+    ctx.fillStyle = d.color;
+    ctx.fill();
+    start += angle;
+  });
+  // Inner hole
+  ctx.beginPath();
+  ctx.arc(cx, cy, inner, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+
+  // Center text
+  ctx.fillStyle = '#333'; ctx.textAlign = 'center';
+  ctx.font = 'bold 20px Roboto, sans-serif';
+  ctx.fillText(fmtHours(total), cx, cy - 2);
+  ctx.font = '11px Roboto, sans-serif';
+  ctx.fillStyle = '#666';
+  ctx.fillText('Total Hours', cx, cy + 16);
+
+  // Legend
+  let ly = h - 24;
+  data.forEach((d, i) => {
+    const lx = w / 2 - 80 + i * 100;
+    ctx.fillStyle = d.color;
+    ctx.fillRect(lx, ly, 12, 12);
+    ctx.fillStyle = '#333'; ctx.textAlign = 'left';
+    ctx.font = '12px Roboto, sans-serif';
+    ctx.fillText(`${d.label} (${((d.value/sum)*100).toFixed(0)}%)`, lx + 18, ly + 10);
+  });
+}
+
+/* Employee bar chart (reports) */
+function drawEmpBarChart(data) {
+  const canvas = document.getElementById('empBarChart');
+  const { ctx, w, h } = setupCanvas(canvas);
+  if (w === 0 || h === 0) return; // Guard against hidden canvas
+  ctx.clearRect(0, 0, w, h);
+
+  const byEmp = {};
+  data.forEach(e => {
+    byEmp[e.name] = (byEmp[e.name] || 0) + e.hours;
+  });
+  const labels = Object.keys(byEmp);
+  const values = Object.values(byEmp);
+  if (!labels.length) {
+    ctx.fillStyle = '#999'; ctx.textAlign = 'center'; ctx.font = '13px Roboto';
+    ctx.fillText('No data', w / 2, h / 2);
+    return;
+  }
+
+  const pad = { t: 20, r: 20, b: 70, l: 50 };
+  const chartW = w - pad.l - pad.r;
+  const chartH = h - pad.t - pad.b;
+  const maxVal = Math.max(...values) * 1.15 || 1;
+
+  // Grid
+  ctx.strokeStyle = '#eee'; ctx.lineWidth = 1;
+  ctx.fillStyle = '#999'; ctx.font = '11px Roboto';
+  for (let i = 0; i <= 5; i++) {
+    const y = pad.t + (chartH / 5) * i;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + chartW, y); ctx.stroke();
+    ctx.textAlign = 'right';
+    ctx.fillText((maxVal - (maxVal / 5) * i).toFixed(0) + 'h', pad.l - 6, y + 4);
+  }
+
+  const barW = Math.min(50, chartW / labels.length * 0.6);
+  const gap = chartW / labels.length;
+  labels.forEach((lbl, i) => {
+    const v = values[i];
+    const x = pad.l + gap * i + (gap - barW) / 2;
+    const barH = (v / maxVal) * chartH;
+    const y = pad.t + chartH - barH;
+
+    const grad = ctx.createLinearGradient(0, y, 0, y + barH);
+    grad.addColorStop(0, '#1976d2');
+    grad.addColorStop(1, '#0288d1');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, y, barW, barH);
+
+    ctx.fillStyle = '#333'; ctx.textAlign = 'center';
+    ctx.fillText(v.toFixed(1) + 'h', x + barW / 2, y - 6);
+
+    // Rotated label
+    ctx.save();
+    ctx.translate(x + barW / 2, pad.t + chartH + 12);
+    ctx.rotate(-Math.PI / 6);
+    ctx.fillStyle = '#555'; ctx.textAlign = 'right';
+    ctx.font = '11px Roboto';
+    ctx.fillText(lbl.length > 12 ? lbl.slice(0, 11) + '…' : lbl, 0, 0);
+    ctx.restore();
+  });
+}
+
+/* Overtime trend line chart */
+function drawTrendChart(data) {
+  const canvas = document.getElementById('trendChart');
+  const { ctx, w, h } = setupCanvas(canvas);
+  if (w === 0 || h === 0) return; // Guard against hidden canvas
+  ctx.clearRect(0, 0, w, h);
+
+  // Group by date
+  const byDate = {};
+  data.forEach(e => {
+    byDate[e.date] = (byDate[e.date] || 0) + Math.max(0, e.hours - OVERTIME_THRESHOLD);
+  });
+  const dates = Object.keys(byDate).sort();
+  if (dates.length < 1) {
+    ctx.fillStyle = '#999'; ctx.textAlign = 'center'; ctx.font = '13px Roboto';
+    ctx.fillText('No data', w / 2, h / 2);
+    return;
+  }
+  const values = dates.map(d => byDate[d]);
+
+  const pad = { t: 20, r: 20, b: 50, l: 40 };
+  const chartW = w - pad.l - pad.r;
+  const chartH = h - pad.t - pad.b;
+  const maxVal = Math.max(1, ...values) * 1.2;
+
+  // Grid
+  ctx.strokeStyle = '#eee';
+  ctx.fillStyle = '#999'; ctx.font = '10px Roboto';
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.t + (chartH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + chartW, y); ctx.stroke();
+    ctx.textAlign = 'right';
+    ctx.fillText((maxVal - (maxVal / 4) * i).toFixed(1), pad.l - 6, y + 3);
+  }
+
+  // Area fill
+  const pts = values.map((v, i) => ({
+    x: pad.l + (dates.length === 1 ? chartW / 2 : (chartW / (dates.length - 1)) * i),
+    y: pad.t + chartH - (v / maxVal) * chartH
+  }));
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pad.t + chartH);
+  pts.forEach(p => ctx.lineTo(p.x, p.y));
+  ctx.lineTo(pts[pts.length - 1].x, pad.t + chartH);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + chartH);
+  grad.addColorStop(0, 'rgba(239,108,0,0.4)');
+  grad.addColorStop(1, 'rgba(239,108,0,0.02)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+  ctx.strokeStyle = '#ef6c00'; ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Points + labels
+  pts.forEach((p, i) => {
+    ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.strokeStyle = '#ef6c00'; ctx.lineWidth = 2; ctx.stroke();
+
+    if (values[i] > 0) {
+      ctx.fillStyle = '#333'; ctx.textAlign = 'center'; ctx.font = '10px Roboto';
+      ctx.fillText(values[i].toFixed(1), p.x, p.y - 10);
+    }
+
+    // X labels (show subset if many)
+    const step = Math.max(1, Math.floor(dates.length / 6));
+    if (i % step === 0 || i === dates.length - 1) {
+      const d = new Date(dates[i]);
+      ctx.fillStyle = '#666'; ctx.textAlign = 'center'; ctx.font = '10px Roboto';
+      ctx.fillText(d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }), p.x, pad.t + chartH + 16);
+    }
+  });
+}
+
+/* ---------- Helpers ---------- */
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+function renderAll() {
+  renderDashboard();
+  renderEntryList();
+  renderReports();
+}
+
+/* ---------- Init ---------- */
+window.addEventListener('resize', () => {
+  drawBarChart(); drawDonutChart();
+  drawEmpBarChart(filteredEntries());
+  drawTrendChart(filteredEntries());
+});
+
+// Seed demo data if empty
+if (entries.length === 0) {
+  const names = ['Alice Johnson', 'Bob Smith', 'Carol Davis'];
+  const today = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    const ds = d.toISOString().slice(0, 10);
+    names.forEach(n => {
+      const inH = 8 + Math.floor(Math.random() * 2);
+      const hours = 7 + Math.random() * 4;
+      const outH = inH + Math.floor(hours);
+      const outM = Math.floor((hours % 1) * 60);
+      entries.push({
+        id: Date.now() + Math.random(),
+        name: n, date: ds,
+        timeIn: String(inH).padStart(2, '0') + ':00',
+        timeOut: String(outH).padStart(2, '0') + ':' + String(outM).padStart(2, '0'),
+        hours: calcHours(
+          String(inH).padStart(2, '0') + ':00',
+          String(outH).padStart(2, '0') + ':' + String(outM).padStart(2, '0')
+        )
+      });
+    });
+  }
+  saveEntries();
+}
+
+renderAll();
+</script>
+</body>
+</html>
