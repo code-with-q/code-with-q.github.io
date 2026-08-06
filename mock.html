@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR Interview Prep</title>
+<meta name="description" content="Self-introductions, mock interview answers, and strategy — a simple rehearsal sheet.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Spectral:ital,wght@0,400;0,500;1,400&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f1e8;
+    --card:#ffffff;
+    --ink:#211a10;
+    --soft:#6a5f4c;
+    --line:#e3dbc9;
+    --amber:#e89b2d;
+    --amber-bg:#fdf3e2;
+    --red:#d94f38;
+    --green:#2f7d4f;
+    --green-bg:#e9f3ec;
+    --blue-bg:#eef2f7;
+    --blue:#3d6ea5;
+    --disp:'Bricolage Grotesque', system-ui, sans-serif;
+    --body:'Spectral', Georgia, serif;
+    --mono:'IBM Plex Mono', ui-monospace, monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font:400 1rem/1.7 var(--body);
+    -webkit-font-smoothing:antialiased;
+  }
+  section{scroll-margin-top:76px}
+  .wrap{max-width:760px;margin-inline:auto;padding-inline:20px}
+
+  /* ---------- top nav ---------- */
+  nav{
+    position:sticky;top:0;z-index:20;
+    background:rgba(245,241,232,.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-in{
+    display:flex;gap:8px;overflow-x:auto;
+    padding:12px 20px;
+    max-width:760px;margin-inline:auto;
+    scrollbar-width:none;
+  }
+  .nav-in::-webkit-scrollbar{display:none}
+  .nav-in a{
+    flex:0 0 auto;
+    font:600 .72rem/1 var(--mono);
+    letter-spacing:.06em;
+    color:var(--soft);
+    text-decoration:none;
+    padding:9px 14px;
+    border:1px solid var(--line);
+    border-radius:99px;
+    background:var(--card);
+    white-space:nowrap;
+  }
+  .nav-in a:hover{border-color:var(--amber);color:var(--ink)}
+
+  /* ---------- header ---------- */
+  header{padding:48px 0 36px;text-align:left}
+  .badge{
+    display:inline-block;
+    font:600 .68rem/1 var(--mono);
+    letter-spacing:.14em;
+    color:var(--amber);
+    background:var(--amber-bg);
+    border:1px solid #f0d9b0;
+    padding:7px 12px;border-radius:99px;
+    margin-bottom:16px;
+  }
+  h1{
+    font:800 clamp(2rem,7vw,3.2rem)/1.1 var(--disp);
+    letter-spacing:-.02em;
+  }
+  header p{color:var(--soft);margin-top:12px;max-width:52ch}
+
+  /* ---------- sections ---------- */
+  .section{padding:36px 0}
+  .section + .section{border-top:1px solid var(--line)}
+  .label{
+    font:600 .68rem/1 var(--mono);
+    letter-spacing:.16em;
+    color:var(--red);
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  h2{
+    font:800 clamp(1.5rem,4.5vw,2.1rem)/1.15 var(--disp);
+    letter-spacing:-.01em;
+    margin-bottom:20px;
+  }
+
+  /* ---------- script card ---------- */
+  .script-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-top:4px solid var(--red);
+    border-radius:12px;
+    padding:22px 20px;
+    box-shadow:0 4px 16px rgba(60,45,20,.06);
+  }
+  .script-card p{font-size:1.05rem;line-height:1.85}
+  .script-card p + p{margin-top:12px}
+  .time-tag{
+    display:inline-block;
+    font:600 .66rem/1 var(--mono);
+    color:var(--red);
+    background:#fdeeea;
+    border-radius:6px;
+    padding:6px 10px;
+    margin-bottom:14px;
+  }
+
+  /* ---------- answer / tip blocks ---------- */
+  .answer{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-left:4px solid var(--amber);
+    border-radius:10px;
+    padding:16px 18px;
+    margin-top:12px;
+    font-style:italic;
+    color:#3c3323;
+  }
+  .answer::before{content:"👉 ";font-style:normal}
+
+  /* ---------- QA cards ---------- */
+  .qa{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:20px;
+    box-shadow:0 3px 12px rgba(60,45,20,.05);
+  }
+  .qa + .qa{margin-top:14px}
+  .q-tag{
+    display:inline-block;
+    font:600 .62rem/1 var(--mono);
+    letter-spacing:.12em;
+    color:var(--blue);
+    background:var(--blue-bg);
+    border-radius:6px;
+    padding:5px 9px;
+    margin-bottom:10px;
+  }
+  .q-tag.green{color:var(--green);background:var(--green-bg)}
+  .qa h3{
+    font:700 1.1rem/1.35 var(--disp);
+    margin-bottom:2px;
+  }
+  .qa .answer{margin-top:10px}
+
+  /* ---------- why list / strategy ---------- */
+  .why-list{list-style:none;margin-top:18px;display:grid;gap:10px}
+  .why-list li{
+    background:var(--green-bg);
+    border:1px solid #d3e5d8;
+    border-radius:10px;
+    padding:12px 16px;
+    font-size:.95rem;
+  }
+  .why-list li b{color:var(--green)}
+  .why-list.amber li{background:var(--amber-bg);border-color:#f0d9b0}
+  .why-list.amber li b{color:#a5651a}
+  .strategy-box{
+    background:var(--card);
+    border:1px dashed var(--amber);
+    border-radius:12px;
+    padding:20px;
+    margin-top:24px;
+  }
+  .strategy-box h3{font:800 1.15rem/1.3 var(--disp);margin-bottom:12px}
+
+  /* ---------- footer ---------- */
+  footer{
+    margin-top:40px;
+    padding:32px 0 48px;
+    border-top:1px solid var(--line);
+    text-align:center;
+    color:var(--soft);
+    font:500 .78rem/1.8 var(--mono);
+    letter-spacing:.06em;
+  }
+
+  /* ---------- tablet / desktop ---------- */
+  @media (min-width:760px){
+    .wrap{padding-inline:28px}
+    header{padding:72px 0 48px}
+    .qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .qa-grid .qa{margin-top:0}
+    .qa-grid .qa.span2{grid-column:1 / -1}
+    .script-card{padding:30px 32px}
+    .why-list{grid-template-columns:1fr 1fr}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+
+<nav aria-label="Sections">
+  <div class="nav-in">
+    <a href="#intro1">🎤 Self-Intro</a>
+    <a href="#mock1">⚡ Mock Q&amp;A</a>
+    <a href="#whys">❓ The “Whys”</a>
+    <a href="#intro2">🛠 Tech Intro</a>
+    <a href="#mock2">🏭 Mfg Q&amp;A</a>
+  </div>
+</nav>
+
+<header class="wrap">
+  <span class="badge">INTERVIEW REHEARSAL SHEET</span>
+  <h1>HR Interview Prep</h1>
+  <p>Two self-introductions, nine model answers, and the “why” strategy — everything you need to rehearse before the big day.</p>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ 1. SELF-INTRODUCTION (30s) ============ -->
+  <section class="section" id="intro1">
+    <p class="label">Track 01 · Self-Introduction</p>
+    <h2>HR Self‑Introduction (30 seconds)</h2>
+
+    <div class="script-card">
+      <span class="time-tag">⏱ TARGET · 00:30</span>
+      <p>“Good day, I’m currently a Senior Specialist/Programmer with 10 years of experience working in-house for a manufacturing company.</p>
+      <p>Over the years, I’ve led projects that improved efficiency across operations—like paperless approval systems, HR onboarding tools, and company-wide portals.</p>
+      <p>I enjoy collaborating with different departments, translating business needs into practical solutions, and mentoring younger colleagues.</p>
+      <p>Outside of enterprise systems, I also develop mobile games, which keeps me creative and adaptable.</p>
+      <p>My goal is to bring both technical expertise and a strong sense of teamwork to help the organization grow.”</p>
+    </div>
+
+    <ul class="why-list">
+      <li><b>Role alignment →</b> emphasizes your current senior specialist position.</li>
+      <li><b>Business impact →</b> highlights efficiency and collaboration, not just coding.</li>
+      <li><b>Teamwork focus →</b> stresses mentoring and cross-department cooperation.</li>
+      <li><b>Personal touch →</b> mentions game development as proof of creativity and adaptability.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 2. MOCK INTERVIEW (CONCISE) ============ -->
+  <section class="section" id="mock1">
+    <p class="label">Track 02 · Mock Interview</p>
+    <h2>⚡ HR Mock Interview (Concise)</h2>
+
+    <article class="qa">
+      <span class="q-tag">Q1 · MOTIVATION</span>
+      <h3>Why this role after 10 years?</h3>
+      <p class="answer">“I want to leverage my decade of experience in C# and manufacturing systems to mentor younger developers and design scalable solutions that directly improve efficiency.”</p>
+    </article>
+
+    <article class="qa">
+      <span class="q-tag">Q2 · STRENGTHS &amp; WEAKNESSES</span>
+      <h3>What are your strengths and weaknesses?</h3>
+      <p class="answer">“Strength: deep technical expertise and mentoring ability. Weakness: tendency to over-optimize early, but I’ve learned to align with business priorities first.”</p>
+    </article>
+
+    <article class="qa">
+      <span class="q-tag">Q3 · CONFLICT RESOLUTION</span>
+      <h3>Tell me about a conflict with a colleague.</h3>
+      <p class="answer">“We disagreed on using a third-party library. I proposed proof-of-concepts for both, presented trade-offs, and we chose the best fit together—avoiding conflict and keeping alignment.”</p>
+    </article>
+
+    <article class="qa">
+      <span class="q-tag">Q4 · STRESS MANAGEMENT</span>
+      <h3>How do you handle stress under deadlines?</h3>
+      <p class="answer">“I break tasks into smaller deliverables, prioritize impact, and communicate risks early. This keeps projects on track and stress manageable.”</p>
+    </article>
+
+    <article class="qa">
+      <span class="q-tag">Q5 · FUTURE GOALS</span>
+      <h3>Where do you see yourself in 5 years?</h3>
+      <p class="answer">“As a technical leader or architect, balancing hands-on coding with guiding teams and building a strong developer culture.”</p>
+    </article>
+  </section>
+
+  <!-- ============ 3. WHY ANSWERS ============ -->
+  <section class="section" id="whys">
+    <p class="label">Track 03 · The “Why” Questions</p>
+    <h2>HR “Why” Answers (Concise &amp; Impactful)</h2>
+
+    <div class="qa-grid">
+      <article class="qa">
+        <h3>Why should we hire you?</h3>
+        <p class="answer">“You should hire me because I bring 10 years of proven experience building enterprise systems that directly improved efficiency in manufacturing operations. I combine technical depth in .NET and workflow automation with the ability to mentor colleagues and align solutions with business goals. I deliver results that are both reliable and scalable.”</p>
+      </article>
+
+      <article class="qa">
+        <h3>Why do you want to work here?</h3>
+        <p class="answer">“I want to work here because your company values innovation and efficiency—areas where I’ve consistently contributed in my career. I’m excited to apply my background in enterprise systems and automation to help streamline processes and support long‑term growth.”</p>
+      </article>
+
+      <article class="qa">
+        <h3>Why are you the right fit for this role?</h3>
+        <p class="answer">“I’m the right fit because I understand both the technical and operational sides of manufacturing. I’ve built systems for HR, asset tracking, and compliance, and I know how to translate business needs into practical solutions. My mix of technical expertise and business impact makes me a strong match for this role.”</p>
+      </article>
+
+      <article class="qa">
+        <h3>Why are you leaving your current role?</h3>
+        <p class="answer">“I’ve enjoyed my current role and the systems I’ve built, but I’m looking for new challenges where I can grow further, contribute to larger projects, and bring fresh ideas to a new team. I see this opportunity as the right next step in my career.”</p>
+      </article>
+    </div>
+
+    <div class="strategy-box">
+      <h3>🔑 Strategy for “Why” Questions</h3>
+      <ul class="why-list amber">
+        <li><b>Keep answers positive</b> — focus on growth, not complaints.</li>
+        <li><b>Emphasize business impact</b> — efficiency, compliance, scalability.</li>
+        <li><b>Show alignment with company values</b> — innovation, teamwork, long‑term goals.</li>
+        <li><b>End with confidence</b> — clear statement of fit.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 4. TECHNICAL SELF-INTRO ============ -->
+  <section class="section" id="intro2">
+    <p class="label">Track 04 · Technical Self-Introduction</p>
+    <h2>Self‑Introduction (Concise &amp; Impactful)</h2>
+
+    <div class="script-card">
+      <span class="time-tag">⏱ TARGET · 00:45</span>
+      <p>“Good day, I’m a Senior Programmer with 10 years of experience developing enterprise-grade .NET solutions in the manufacturing sector.</p>
+      <p>I’ve led projects ranging from fixed asset management and RFID-enabled tracking to workflow automation and company-wide portals, ensuring efficiency and compliance across operations.</p>
+      <p>Beyond enterprise systems, I also publish Android games in Unity, which sharpened my skills in scalable architecture, performance optimization, and monetization.</p>
+      <p>My strength lies in bridging technical depth with practical business impact, and I’m excited to bring that combination of expertise and innovation to your team.”</p>
+    </div>
+
+    <ul class="why-list">
+      <li><b>Clear role alignment →</b> emphasizes your current senior specialist position.</li>
+      <li><b>Domain expertise →</b> highlights manufacturing systems and enterprise solutions.</li>
+      <li><b>Unique differentiator →</b> mentions independent Unity game development as proof of versatility.</li>
+      <li><b>Impact focus →</b> stresses efficiency, compliance, and scalability.</li>
+    </ul>
+  </section>
+
+  <!-- ============ 5. MANUFACTURING MOCK INTERVIEW ============ -->
+  <section class="section" id="mock2">
+    <p class="label">Track 05 · Manufacturing / In‑house Programmer</p>
+    <h2>🏭 HR Mock Interview (Manufacturing)</h2>
+
+    <article class="qa">
+      <span class="q-tag green">Q1 · MOTIVATION</span>
+      <h3>Why this role after 10 years?</h3>
+      <p class="answer">“I’ve spent a decade building enterprise systems in manufacturing as a senior specialist/programmer. I’m motivated to continue applying that expertise while mentoring others and driving efficiency through scalable solutions.”</p>
+    </article>
+
+    <article class="qa">
+      <span class="q-tag green">Q2 · STRENGTHS &amp; WEAKNESSES</span>
+      <h3>What are your strengths and weaknesses?</h3>
+      <p class="answer">“Strength: deep technical mastery in C#/WinForms and designing enterprise systems that streamline manufacturing workflows. Weakness: I sometimes over-focus on optimization early, but I’ve learned to align with business priorities first.”</p>
+    </article>
+
+    <article class="qa">
+      <span class="q-tag green">Q3 · CONFLICT RESOLUTION</span>
+      <h3>Tell me about a conflict with a colleague.</h3>
+      <p class="answer">“We disagreed on whether to use a third-party library or build in-house. I proposed proof-of-concepts for both, presented trade-offs, and we chose the solution that best fit long-term maintainability—keeping the team aligned.”</p>
+    </article>
+
+    <article class="qa">
+      <span class="q-tag green">Q4 · STRESS MANAGEMENT</span>
+      <h3>How do you handle stress under deadlines?</h3>
+      <p class="answer">“I break tasks into smaller deliverables, prioritize impact, and communicate risks early. In manufacturing projects with strict deadlines, this approach kept delivery on track and stress manageable.”</p>
+    </article>
+
+    <article class="qa">
+      <span class="q-tag green">Q5 · FUTURE GOALS</span>
+      <h3>Where do you see yourself in 5 years?</h3>
+      <p class="answer">“As a technical leader or architect, balancing hands-on coding with guiding teams, and continuing to build enterprise systems that improve manufacturing efficiency.”</p>
+    </article>
+  </section>
+
+</main>
+
+<footer>
+  REHEARSE OUT LOUD · TIME YOURSELF · OWN THE ROOM<br>
+  10 YEARS IN — NEXT STEP UP 🚀
+</footer>
+
+</body>
+</html>
