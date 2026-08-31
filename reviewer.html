@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Final Interview Reviewer — Senior .NET Software Engineer</title>
+<style>
+  :root{
+    --bg:#f4f6fa; --panel:#ffffff; --card:#ffffff; --text:#1c2333; --muted:#5b6472;
+    --accent:#2563eb; --accent-dark:#1e40af; --border:#e3e8f0; --answer-bg:#eef4ff;
+    --good:#16a34a; --warn:#d97706; --shadow:0 1px 3px rgba(20,30,60,.08);
+  }
+  [data-theme="dark"]{
+    --bg:#0f1420; --panel:#161c2c; --card:#1a2135; --text:#e8ecf5; --muted:#9aa4b5;
+    --accent:#4f8cff; --accent-dark:#7fb0ff; --border:#26304a; --answer-bg:#20304e;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.5}
+  button{font-family:inherit}
+
+  .topbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;
+    gap:12px;padding:12px 20px;background:var(--panel);border-bottom:1px solid var(--border)}
+  .brand-title{font-weight:800;font-size:1.05rem}
+  .brand-sub{color:var(--muted);font-size:.8rem}
+  .topbar-actions{display:flex;gap:8px}
+  .icon-btn{padding:8px 12px;border:1px solid var(--border);background:var(--card);color:var(--text);
+    border-radius:10px;cursor:pointer;font-size:.9rem}
+
+  .layout{display:flex;min-height:calc(100vh - 61px)}
+  .sidebar{width:250px;flex-shrink:0;padding:16px;border-right:1px solid var(--border);background:var(--panel)}
+  .sidebar nav{display:flex;flex-direction:column;gap:6px;position:sticky;top:77px}
+  .nav-btn{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;
+    padding:10px 12px;border:none;border-radius:10px;background:transparent;color:var(--text);
+    cursor:pointer;font-size:.9rem;font-weight:600}
+  .nav-btn:hover{background:var(--answer-bg)}
+  .nav-btn.active{background:var(--accent);color:#fff}
+  .progress-box{margin-top:22px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--card)}
+  .progress-box .lbl{font-size:.75rem;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between}
+  .bar{height:8px;border-radius:99px;background:var(--border);overflow:hidden}
+  .bar-fill{height:100%;width:0;background:var(--good);border-radius:99px;transition:width .3s}
+  .reset-link{margin-top:8px;font-size:.72rem;color:var(--muted);background:none;border:none;cursor:pointer;text-decoration:underline;padding:0}
+
+  main{flex:1;padding:26px 30px;max-width:1000px}
+  h1{font-size:1.4rem;margin:0 0 4px}
+  .page-sub{color:var(--muted);font-size:.9rem;margin:0 0 20px}
+
+  .rules-card{background:var(--card);border:1px solid var(--border);border-left:5px solid var(--accent);
+    border-radius:12px;padding:16px 18px;margin-bottom:18px;box-shadow:var(--shadow)}
+  .rules-card h3{margin:0 0 10px;font-size:1rem}
+  .rules-card ul{margin:0;padding-left:20px}
+  .rules-card li{margin:6px 0;font-size:.92rem}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .chip{padding:6px 12px;border-radius:999px;background:var(--answer-bg);font-size:.78rem;font-weight:600}
+
+  .section-title{display:flex;align-items:center;gap:10px;margin:28px 0 4px;font-size:1.08rem}
+  .section-title .count{font-size:.72rem;color:var(--muted);font-weight:600;background:var(--answer-bg);
+    padding:3px 9px;border-radius:999px}
+  .section-intro{color:var(--muted);font-size:.86rem;margin:0 0 12px;font-style:italic}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;
+    overflow:hidden;box-shadow:var(--shadow)}
+  .card-head{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;
+    padding:13px 16px;background:none;border:none;cursor:pointer;text-align:left;color:var(--text);
+    font-weight:600;font-size:.93rem}
+  .chev{transition:transform .2s;color:var(--muted);flex-shrink:0}
+  .card.open .chev{transform:rotate(180deg)}
+  .card.reviewed .qtext::after{content:" ✓";color:var(--good);font-weight:800}
+  .answer{display:none;padding:0 16px 6px}
+  .card.open .answer{display:block;animation:fade .18s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+  .atext{margin:4px 0 0;padding:11px 14px;background:var(--answer-bg);border-radius:10px;font-size:.95rem}
+  .note{color:var(--muted);font-size:.8rem;margin:8px 2px 4px;font-style:italic}
+  .card-foot{padding:0 16px 12px}
+  .mark-btn{font-size:.72rem;padding:6px 11px;border-radius:8px;border:1px solid var(--border);
+    background:transparent;color:var(--muted);cursor:pointer;font-weight:600}
+  .card.reviewed .mark-btn{color:var(--good);border-color:var(--good)}
+
+  .toolbar{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap}
+  .toolbar input{flex:1;min-width:200px;padding:10px 14px;border-radius:10px;border:1px solid var(--border);
+    background:var(--card);color:var(--text);font-size:.9rem}
+  .btn{padding:9px 16px;border-radius:10px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-weight:700;font-size:.88rem}
+  .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+  .btn.good{background:var(--good)}
+  .btn.warn{background:var(--warn)}
+  .btn.small{padding:7px 12px;font-size:.78rem}
+
+  .p-wrap{max-width:720px}
+  .p-meta{color:var(--muted);font-size:.8rem;margin-bottom:10px;display:flex;gap:10px;align-items:center}
+  .p-cat{background:var(--answer-bg);padding:3px 10px;border-radius:999px;font-weight:700}
+  .p-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px;box-shadow:var(--shadow)}
+  .p-q{font-size:1.25rem;font-weight:800;margin:0 0 18px}
+  .p-a{margin:0 0 18px;padding:14px 16px;background:var(--answer-bg);border-radius:10px;font-size:1.02rem}
+  .p-actions{display:flex;gap:10px;flex-wrap:wrap}
+  .kbd-hint{color:var(--muted);font-size:.72rem;margin-top:14px}
+  .result-grid{display:flex;gap:14px;margin:18px 0}
+  .result-box{flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center}
+  .result-box .num{font-size:2rem;font-weight:800}
+  .setup-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;box-shadow:var(--shadow)}
+  .setup-box label{display:flex;gap:8px;align-items:center;margin:8px 0;font-size:.92rem;cursor:pointer}
+
+  @media (max-width:920px){
+    .layout{flex-direction:column}
+    .sidebar{width:100%;border-right:none;border-bottom:1px solid var(--border)}
+    .sidebar nav{position:static;flex-direction:row;overflow-x:auto;padding-bottom:4px}
+    .nav-btn{white-space:nowrap;width:auto}
+    .progress-box{display:none}
+    main{padding:18px}
+  }
+  @media print{
+    .sidebar,.toolbar,.card-foot,.topbar-actions,.no-print,.kbd-hint{display:none!important}
+    .answer{display:block!important}
+    body{background:#fff}
+    .card,.rules-card{box-shadow:none;break-inside:avoid}
+    main{max-width:100%}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div>
+    <div class="brand-title">🎯 Final Interview Reviewer</div>
+    <div class="brand-sub">Senior .NET Software Engineer — Hiring Manager Round</div>
+  </div>
+  <div class="topbar-actions">
+    <button class="icon-btn" data-act="theme" id="themeBtn">🌙 Dark</button>
+    <button class="icon-btn" data-act="print">🖨 Print</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <nav id="nav"></nav>
+    <div class="progress-box">
+      <div class="lbl"><span>Reviewed</span><span id="progText">0 / 0</span></div>
+      <div class="bar"><div class="bar-fill" id="progBar"></div></div>
+      <button class="reset-link" data-act="reset">Reset progress</button>
+    </div>
+  </aside>
+  <main id="main"></main>
+</div>
+
+<script>
+/* ============ DATA ============ */
+const DATA = [
+ {id:'tellme', icon:'👤', title:'Tell Me About Yourself',
+  intro:'Top level only. Role → years → technology → industry → value. No system names unless asked.',
+  items:[
+   {q:`"Tell me about yourself." — recommended top-level version`,
+    a:`Good afternoon. I'm [NAME], a Senior .NET Programmer with 10 years of experience developing enterprise applications, mainly for the manufacturing sector. I focus on building reliable, maintainable solutions that improve operational efficiency and support business needs.`,
+    note:`Then stop. Do not list systems unless asked.`},
+   {q:`"Tell me about yourself." — even shorter (manager in a hurry)`,
+    a:`Good afternoon. I'm [NAME], a Senior .NET Programmer with 10 years building enterprise .NET applications for manufacturing. I focus on reliable, maintainable solutions that support business operations.`},
+   {q:`If asked to elaborate`,
+    a:`My work usually involves understanding business requirements, choosing practical technical approaches, and delivering stable solutions that are easy to support.`,
+    note:`Still top level. No project names.`},
+   {q:`"What systems have you built?" (only if asked)`,
+    a:`Fixed asset management, RFID-enabled tracking, workflow automation, and company-wide portals.`},
+   {q:`If asked about Unity / hobbies (only if asked)`,
+    a:`Outside work, I also develop Android games using Unity, which strengthens my architecture, debugging, and product delivery skills.`},
+   {q:`Mental outline (memorize this)`,
+    a:`Senior .NET Programmer • 10 years • Enterprise applications • Manufacturing sector • Reliable, maintainable, business-focused.`}
+  ]},
+ {id:'salary', icon:'💰', title:'Salary Negotiation',
+  intro:'Say flexibility → ask the budget → stay silent. Never justify your number.',
+  items:[
+   {q:`"What are your salary expectations?"`,
+    a:`I'm flexible. Could you share the budget for this role?`,
+    note:`Say it, then stay silent. Let them fill the silence.`},
+   {q:`"Give me a number first." / "What is your range?"`,
+    a:`I'm looking at roughly [LOW] to [HIGH], depending on the total package. What is the budget on your end?`,
+    note:`Set [LOW] to a number you would actually accept.`},
+   {q:`"What is your current salary?"`,
+    a:`I prefer to focus on the market value for this role. Can you share the budget you have allocated?`,
+    note:`If pushed again: "My current total compensation is around [NUMBER], but I'm looking for a step up for this senior role."`},
+   {q:`"Are you flexible on salary?"`, a:`Yes. I'm flexible for the right total package.`},
+   {q:`"Do you have other offers? / What are they paying?"`,
+    a:`Yes, I'm in final stages with another company. (or: No, not yet.) I prefer to keep their offer details private, but I'm looking for a competitive rate.`},
+   {q:`"If we offer [LOWER NUMBER], will you accept?"`,
+    a:`I would need to review the full benefits package first.`,
+    note:`Don't say yes or no immediately.`}
+  ]},
+ {id:'yesno', icon:'✔', title:'Simple Yes/No .NET Questions',
+  intro:'Answer Yes/No and stop. Add the short tail only if true.',
+  items:[
+   {q:`Do you have experience with C#?`, a:`Yes, 10 years.`},
+   {q:`Do you have experience with .NET?`, a:`Yes, 10 years.`},
+   {q:`Have you used .NET Core or .NET 6/7/8?`, a:`Yes.`},
+   {q:`Have you built ASP.NET Web APIs?`, a:`Yes.`},
+   {q:`Have you worked with SQL Server?`, a:`Yes.`},
+   {q:`Have you used Entity Framework?`, a:`Yes. / Not deeply.`},
+   {q:`Have you worked with Azure?`, a:`Yes. / Not directly.`},
+   {q:`Have you used CI/CD?`, a:`Yes — Azure DevOps / GitHub Actions.`},
+   {q:`Have you written unit tests?`, a:`Yes.`},
+   {q:`Have you worked with Git?`, a:`Yes.`},
+   {q:`Have you worked in Agile/Scrum?`, a:`Yes.`},
+   {q:`Have you done code reviews?`, a:`Yes.`},
+   {q:`Have you handled production issues?`, a:`Yes.`},
+   {q:`Have you worked with legacy code?`, a:`Yes.`},
+   {q:`Have you migrated .NET Framework to .NET Core?`, a:`Yes. / No.`},
+   {q:`Have you worked with microservices?`, a:`Yes. / Mostly monolith.`},
+   {q:`Have you worked with REST APIs?`, a:`Yes.`},
+   {q:`Have you worked with frontend frameworks?`, a:`Yes, basic. / No, mainly backend.`},
+   {q:`Have you mentored junior developers?`, a:`Yes, a little. / No.`},
+   {q:`Are you comfortable with on-call support?`, a:`Yes. / No.`},
+   {q:`Are you comfortable doing bug fixing and maintenance?`, a:`Yes.`},
+   {q:`Are you comfortable working with a team?`, a:`Yes.`},
+   {q:`Can you work independently?`, a:`Yes.`},
+   {q:`Are you okay with hybrid/onsite work?`, a:`Yes. / No.`},
+   {q:`Can you start by the expected date?`, a:`Yes. / No.`}
+  ]},
+ {id:'background', icon:'🧭', title:'Background & Motivation',
+  intro:'1–2 sentences. No negativity about current company.',
+  items:[
+   {q:`Why do you want this role?`, a:`I want a stable .NET role where I can contribute long-term.`},
+   {q:`Why this company?`, a:`I'm interested in the product and the technology stack.`},
+   {q:`Why are you leaving your current job?`, a:`I'm looking for more ownership and better growth.`, note:`Never say negative things about your current company.`},
+   {q:`What are you looking for in your next role?`, a:`A team where I can deliver reliably and grow as a .NET engineer.`},
+   {q:`Why should we hire you?`, a:`I can deliver reliable .NET features, communicate clearly, and take ownership.`},
+   {q:`What are your strengths?`, a:`Reliability, ownership, and clear communication.`},
+   {q:`What is your weakness?`, a:`I sometimes check details too much, so now I focus more on priority and deadline.`},
+   {q:`Where do you see yourself in 2–3 years?`, a:`As a strong .NET engineer trusted with important modules.`},
+   {q:`What kind of work do you prefer?`, a:`I'm comfortable with both new development and maintenance/support.`}
+  ]},
+ {id:'delivery', icon:'🚀', title:'Delivery & Ownership',
+  intro:'Show: prioritize, communicate early, take ownership.',
+  items:[
+   {q:`Tell me about a project you delivered.`, a:`I worked on a .NET application for [DOMAIN]. I handled [FEATURE/FIX], and it was delivered to production.`, note:`One or two sentences only.`},
+   {q:`What was your role in the project?`, a:`I developed features, fixed bugs, and supported testing and deployment.`},
+   {q:`How do you handle deadlines?`, a:`I prioritize, communicate early, and focus on the most important task.`},
+   {q:`What if you cannot finish on time?`, a:`I inform my manager early and provide options.`},
+   {q:`How do you estimate work?`, a:`I break the task into smaller parts and flag risks early.`},
+   {q:`What do you do if requirements are unclear?`, a:`I ask questions and confirm assumptions before developing.`},
+   {q:`How do you handle multiple priorities?`, a:`I ask my manager to confirm priority, then focus.`},
+   {q:`Have you worked under pressure?`, a:`Yes.`},
+   {q:`How do you handle production issues?`, a:`Communicate first, then stabilize, fix, and document.`},
+   {q:`How do you ensure quality?`, a:`Code review, testing, and simple maintainable code.`},
+   {q:`How do you balance speed and quality?`, a:`I focus on business priority and avoid unnecessary complexity.`},
+   {q:`Have you ever missed a deadline?`, a:`Yes. I learned to estimate smaller and communicate earlier.`},
+   {q:`What do you do if you are blocked?`, a:`I check what I can do, then ask for help with clear details.`},
+   {q:`Do you take ownership of your tasks?`, a:`Yes.`},
+   {q:`Can you work with minimal supervision?`, a:`Yes.`}
+  ]},
+ {id:'teamwork', icon:'🤝', title:'Teamwork & Communication',
+  intro:'Short, calm, team-first answers.',
+  items:[
+   {q:`How do you work with QA?`, a:`I provide clear notes, reproduce issues, and support testing.`},
+   {q:`How do you work with business analysts / product owners?`, a:`I ask questions and confirm requirements.`},
+   {q:`How do you handle disagreements?`, a:`I listen, share my view briefly, then align with the team decision.`},
+   {q:`Have you disagreed with a manager or senior?`, a:`Yes. I raised my concern respectfully, then followed the decision.`},
+   {q:`How do you handle feedback?`, a:`I listen and improve.`},
+   {q:`Do you prefer working alone or in a team?`, a:`Both. I can work independently and collaborate when needed.`},
+   {q:`How do you communicate delays?`, a:`Early, with impact and options.`},
+   {q:`How do you handle code review comments?`, a:`I review them carefully and fix or discuss if needed.`},
+   {q:`Have you helped junior developers?`, a:`Yes, a little. / No, not formally.`},
+   {q:`How do you share knowledge?`, a:`Documentation, quick discussion, or code review.`},
+   {q:`What if another developer disagrees with your solution?`, a:`I discuss the trade-offs and follow the agreed decision.`}
+  ]},
+ {id:'manager', icon:'🧑‍💼', title:'Manager Fit & Attitude',
+  intro:'Sound easy to manage: clear priorities, feedback, ownership.',
+  items:[
+   {q:`What kind of manager do you prefer?`, a:`Clear priorities and open communication.`},
+   {q:`What do you need from your manager?`, a:`Clear expectations and feedback.`},
+   {q:`How do you handle unclear priorities?`, a:`I ask my manager to confirm priority.`},
+   {q:`What motivates you?`, a:`Delivering useful features and solving problems.`},
+   {q:`What demotivates you?`, a:`Unclear priorities — but I try to clarify them early.`},
+   {q:`How do you handle mistakes?`, a:`I admit it, fix it, and prevent it again.`},
+   {q:`Tell me about a mistake you made.`, a:`I once underestimated a task. Now I break work down and flag risk earlier.`},
+   {q:`How do you learn new technology?`, a:`I read docs, try a small example, then apply it.`},
+   {q:`Are you comfortable with change?`, a:`Yes.`},
+   {q:`Are you comfortable with legacy systems?`, a:`Yes.`},
+   {q:`Are you comfortable doing support work?`, a:`Yes.`},
+   {q:`Are you comfortable with maintenance work?`, a:`Yes.`},
+   {q:`Do you prefer new features or bug fixing?`, a:`I'm comfortable with both.`},
+   {q:`What is your work style?`, a:`Simple, reliable, and communication-first.`},
+   {q:`What would you do in your first 30 days?`, a:`Learn the codebase and team process, and deliver small tasks reliably.`},
+   {q:`What would you do in your first 3 months?`, a:`Understand priorities, become independent, and deliver useful work.`}
+  ]},
+ {id:'logistics', icon:'📦', title:'Logistics & HR-type Questions',
+  intro:'Direct facts. Yes/No where possible.',
+  items:[
+   {q:`What is your notice period?`, a:`[X WEEKS / MONTHS].`},
+   {q:`When can you start?`, a:`After my notice period. / On [DATE].`},
+   {q:`What is your expected salary?`, a:`I'm flexible. Could you share the budget for this role?`, note:`See Salary Negotiation tab.`},
+   {q:`Are you flexible on salary?`, a:`Yes.`},
+   {q:`Are you okay with our salary range?`, a:`Yes. / Mostly yes.`},
+   {q:`Are you interviewing elsewhere?`, a:`Yes. / No.`},
+   {q:`Do you have another offer?`, a:`Yes. / No.`},
+   {q:`Is this company your first choice?`, a:`Yes. (if true)`},
+   {q:`Do you require visa sponsorship?`, a:`Yes. / No.`},
+   {q:`Are you willing to relocate?`, a:`Yes. / No.`},
+   {q:`Are you willing to travel?`, a:`Yes. / No.`},
+   {q:`Are you comfortable with hybrid work?`, a:`Yes. / No.`},
+   {q:`Are you comfortable with onsite work?`, a:`Yes. / No.`},
+   {q:`Do you have any concerns?`, a:`No, my questions are clear.`}
+  ]}
+];
+
+const BANK_IDS = ['yesno','background','delivery','teamwork','manager','logistics'];
+const NAV = [
+  {view:'overview', label:'📋 Overview & Rules'},
+  {view:'tellme',   label:'👤 Tell Me About Yourself'},
+  {view:'salary',   label:'💰 Salary Negotiation'},
+  {view:'bank',     label:'📚 Question Bank'},
+  {view:'practice', label:'🎯 Practice Mode'}
+];
+
+/* ============ STATE ============ */
+const LS_KEY = 'netReviewer.v1';
+let state = { view:'overview', search:'', reviewed:new Set() };
+try{
+  const saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+  (saved.reviewed||[]).forEach(k=>state.reviewed.add(k));
+  if(saved.theme) document.documentElement.dataset.theme = saved.theme;
+}catch(e){}
+function persist(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({
+  reviewed:[...state.reviewed], theme:document.documentElement.dataset.theme||'' })); }catch(e){} }
+
+let practice = {active:false, queue:[], pos:0, knew:0, again:0, revealed:false};
+
+/* ============ HELPERS ============ */
+const $ = s => document.querySelector(s);
+const catById = id => DATA.find(c=>c.id===id);
+const totalItems = () => DATA.reduce((n,c)=>n+c.items.length,0);
+function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+/* ============ RENDER ============ */
+function renderNav(){
+  $('#nav').innerHTML = NAV.map(n=>
+    `<button class="nav-btn ${state.view===n.view?'active':''}" data-act="nav" data-view="${n.view}">${n.label}</button>`
+  ).join('');
+}
+function updateProgress(){
+  const t = totalItems(), r = Math.min(state.reviewed.size, t);
+  $('#progText').textContent = r + ' / ' + t;
+  $('#progBar').style.width = (t? (r/t*100):0) + '%';
+  document.querySelectorAll('[data-count]').forEach(el=>{
+    const c = catById(el.dataset.count);
+    const n = c.items.filter((_,i)=>state.reviewed.has(c.id+':'+i)).length;
+    el.textContent = n + '/' + c.items.length + ' reviewed';
+  });
+}
+function cardHTML(cat, i, item){
+  const key = cat.id+':'+i, rev = state.reviewed.has(key);
+  return `<div class="card ${rev?'reviewed':''}" data-key="${key}">
+    <button class="card-head" data-act="toggle"><span class="qtext">${item.q}</span><span class="chev">▾</span></button>
+    <div class="answer"><p class="atext">${item.a}</p>${item.note?`<p class="note">💡 ${item.note}</p>`:''}</div>
+    <div class="card-foot"><button class="mark-btn" data-act="mark">${rev?'✓ Reviewed':'Mark reviewed'}</button></div>
+  </div>`;
+}
+function sectionHTML(cat){
+  return `<h2 class="section-title">${cat.icon} ${cat.title} <span class="count" data-count="${cat.id}"></span></h2>
+    <p class="section-intro">${cat.intro}</p>` + cat.items.map((it,i)=>cardHTML(cat,i,it)).join('');
+}
+function rulesHTML(){
+  return `<div class="rules-card"><h3>📏 How to answer this manager</h3><ul>
+    <li>Yes/No question → answer <b>"Yes."</b> / <b>"No."</b> Then stop.</li>
+    <li>Open question → 1–2 sentences. Then stop.</li>
+    <li>Do <b>not</b> list systems you built unless asked.</li>
+    <li>Salary: say flexibility → ask the budget → stay silent.</li>
+    <li>No over-explaining. No arguing. No extra examples unless asked.</li>
+    <li>After every answer: <b>stop talking.</b></li></ul>
+    <div class="chips"><span class="chip">Stable</span><span class="chip">Direct</span><span class="chip">Reliable</span><span class="chip">Easy to manage</span><span class="chip">Business-focused</span></div></div>
+    <div class="rules-card"><h3>❓ If asked "Do you have any questions?" — pick only 1 or 2</h3><ul>
+    <li>What is the top priority for this role in the first 3 months?</li>
+    <li>What does success look like for this position?</li>
+    <li>Is this a new role or a replacement?</li>
+    <li>What is the biggest challenge for the team right now?</li></ul></div>`;
+}
+function renderMain(){
+  const m = $('#main');
+  if(state.view==='overview'){
+    m.innerHTML = `<h1>Overview & Rules</h1><p class="page-sub">Final round = trust, delivery, fit. Technical is already proven.</p>
+      ${rulesHTML()}<p class="page-sub">Tip: use <b>Practice Mode</b> to drill answers, and <b>Mark reviewed</b> to track progress.</p>`;
+  }
+  else if(state.view==='tellme'){
+    const c = catById('tellme');
+    m.innerHTML = `<h1>👤 Tell Me About Yourself</h1><p class="page-sub">${c.intro}</p>${rulesHTML()}${sectionHTML(c)}`;
+  }
+  else if(state.view==='salary'){
+    const c = catById('salary');
+    m.innerHTML = `<h1>💰 Salary Negotiation</h1><p class="page-sub">${c.intro}</p>
+      <div class="rules-card"><h3>🥇 Golden rules</h3><ul>
+      <li>Say flexibility → ask the budget → <b>stop talking</b>.</li>
+      <li>After asking the budget, stay silent. Let them fill the silence.</li>
+      <li>Never justify your number with your experience.</li>
+      <li>If forced to give a number: broad range, then ask their budget back.</li></ul></div>` + sectionHTML(c);
+  }
+  else if(state.view==='bank'){
+    m.innerHTML = `<h1>📚 Question Bank</h1><p class="page-sub">Click a question to reveal the answer. Mark it when you can answer it short and confident.</p>
+      <div class="toolbar no-print">
+        <input id="bankSearch" placeholder="🔍 Search questions…" value="${state.search}">
+        <button class="btn ghost small" data-act="expand">Expand all</button>
+        <button class="btn ghost small" data-act="collapse">Collapse all</button>
+      </div>` + BANK_IDS.map(id=>sectionHTML(catById(id))).join('');
+    if(state.search) applySearch();
+    const inp = $('#bankSearch');
+    inp.addEventListener('input', e=>{ state.search = e.target.value; applySearch(); });
+  }
+  else if(state.view==='practice'){
+    renderPractice(m);
+  }
+  renderNav(); updateProgress();
+}
+function applySearch(){
+  const term = state.search.trim().toLowerCase();
+  document.querySelectorAll('#main .card').forEach(card=>{
+    card.style.display = !term || card.textContent.toLowerCase().includes(term) ? '' : 'none';
+  });
+  document.querySelectorAll('#main .section-title, #main .section-intro').forEach(el=>{
+    let sec = el.nextElementSibling, visible = false;
+    if(el.classList.contains('section-title')){
+      let n = el.nextElementSibling;
+      while(n && !n.classList.contains('section-title')){
+        if(n.classList.contains('card') && n.style.display!=='none') visible = true;
+        n = n.nextElementSibling;
+      }
+      el.style.display = (!term || visible || el.textContent.toLowerCase().includes(term)) ? '' : 'none';
+    } else {
+      el.style.display = (!term || el.textContent.toLowerCase().includes(term)) ? '' : 'none';
+    }
+  });
+}
+
+/* ============ PRACTICE ============ */
+function renderPractice(m){
+  if(!practice.active){
+    m.innerHTML = `<h1>🎯 Practice Mode</h1><p class="page-sub">Random flashcards. Reveal, then be honest: knew it or review again.</p>
+      <div class="setup-box"><h3 style="margin-top:0">Choose categories</h3>
+      ${DATA.map(c=>`<label><input type="checkbox" class="p-cat-check" value="${c.id}" checked> ${c.icon} ${c.title} (${c.items.length})</label>`).join('')}
+      <div style="margin-top:16px"><button class="btn" data-act="start-practice">▶ Start practice</button></div>
+      <p class="kbd-hint">Shortcuts: <b>Space</b> = reveal • <b>1</b> = knew it • <b>2</b> = review again</p></div>`;
+    return;
+  }
+  if(practice.pos >= practice.queue.length){
+    m.innerHTML = `<h1>🏁 Practice complete</h1>
+      <div class="result-grid">
+        <div class="result-box"><div class="num" style="color:var(--good)">${practice.knew}</div>Knew it</div>
+        <div class="result-box"><div class="num" style="color:var(--warn)">${practice.again}</div>Needed review</div>
+      </div>
+      <button class="btn" data-act="exit-practice">Practice again</button>
+      <button class="btn ghost" data-act="nav" data-view="overview">Back to overview</button>`;
+    return;
+  }
+  const cur = practice.queue[practice.pos];
+  m.innerHTML = `<div class="p-wrap">
+    <div class="p-meta"><span>Question ${practice.pos+1} of ${practice.queue.length}</span><span class="p-cat">${cur.cat.icon} ${cur.cat.title}</span></div>
+    <div class="p-card">
+      <p class="p-q">${cur.item.q}</p>
+      ${practice.revealed
+        ? `<p class="p-a">${cur.item.a}</p>${cur.item.note?`<p class="note">💡 ${cur.item.note}</p>`:''}
+           <div class="p-actions">
+             <button class="btn good" data-act="knew">✓ Knew it (1)</button>
+             <button class="btn warn" data-act="again">↻ Review again (2)</button>
+           </div>`
+        : `<div class="p-actions"><button class="btn" data-act="reveal">👁 Reveal answer (Space)</button></div>`}
+    </div>
+    <p class="kbd-hint">Answer out loud FIRST, short and direct — then reveal.</p></div>`;
+}
+
+/* ============ EVENTS ============ */
+document.addEventListener('click', e=>{
+  const t = e.target.closest('[data-act]'); if(!t) return;
+  const act = t.dataset.act;
+  if(act==='nav'){ state.view = t.dataset.view; renderMain(); window.scrollTo(0,0); }
+  else if(act==='toggle'){ t.closest('.card').classList.toggle('open'); }
+  else if(act==='mark'){
+    const card = t.closest('.card'), key = card.dataset.key;
+    if(state.reviewed.has(key)){ state.reviewed.delete(key); card.classList.remove('reviewed'); t.textContent='Mark reviewed'; }
+    else { state.reviewed.add(key); card.classList.add('reviewed'); t.textContent='✓ Reviewed'; }
+    persist(); updateProgress();
+  }
+  else if(act==='expand'){ document.querySelectorAll('#main .card').forEach(c=>{ if(c.style.display!=='none') c.classList.add('open'); }); }
+  else if(act==='collapse'){ document.querySelectorAll('#main .card').forEach(c=>c.classList.remove('open')); }
+  else if(act==='theme'){
+    const cur = document.documentElement.dataset.theme==='dark' ? '' : 'dark';
+    document.documentElement.dataset.theme = cur;
+    $('#themeBtn').textContent = cur==='dark' ? '☀️ Light' : '🌙 Dark';
+    persist();
+  }
+  else if(act==='print'){ window.print(); }
+  else if(act==='reset'){ if(confirm('Reset all reviewed progress?')){ state.reviewed.clear(); persist(); renderMain(); } }
+  else if(act==='start-practice'){
+    const cats = [...document.querySelectorAll('.p-cat-check:checked')].map(c=>c.value);
+    if(!cats.length){ alert('Select at least one category.'); return; }
+    const queue = [];
+    cats.forEach(id=>{ const c = catById(id); c.items.forEach((it,i)=>queue.push({cat:c, item:it, key:id+':'+i})); });
+    practice = {active:true, queue:shuffle(queue), pos:0, knew:0, again:0, revealed:false};
+    renderMain();
+  }
+  else if(act==='reveal'){ practice.revealed = true; renderMain(); }
+  else if(act==='knew'){ practice.knew++; practice.pos++; practice.revealed=false; renderMain(); }
+  else if(act==='again'){ practice.again++; practice.queue.push(practice.queue[practice.pos]); practice.pos++; practice.revealed=false; renderMain(); }
+  else if(act==='exit-practice'){ practice.active=false; renderMain(); }
+});
+document.addEventListener('keydown', e=>{
+  if(state.view!=='practice' || !practice.active) return;
+  if(e.target.tagName==='INPUT') return;
+  if(!practice.revealed && (e.key===' '||e.key==='Enter')){ e.preventDefault(); practice.revealed=true; renderMain(); }
+  else if(practice.revealed && e.key==='1'){ practice.knew++; practice.pos++; practice.revealed=false; renderMain(); }
+  else if(practice.revealed && e.key==='2'){ practice.again++; practice.queue.push(practice.queue[practice.pos]); practice.pos++; practice.revealed=false; renderMain(); }
+});
+
+/* ============ INIT ============ */
+if(document.documentElement.dataset.theme==='dark') $('#themeBtn').textContent='☀️ Light';
+renderMain();
+</script>
+</body>
+</html>
